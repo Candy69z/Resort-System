@@ -10,9 +10,16 @@ import {
   TrendingUp,
   Users,
   AlertTriangle,
+  Package,
+  Minus,
+  X,
+  ChevronDown,
 } from "lucide-react";
-import { dailyStats, bookings, orders, rooms, inventoryItems } from "@/lib/mock-data";
+import { useState } from "react";
+import { dailyStats, bookings, orders, rooms, inventoryItems as seedItems, withdrawalLogs as seedLogs } from "@/lib/mock-data";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
+import type { InventoryItem, WithdrawalLog } from "@/lib/types";
 
 function StatCard({
   label,
@@ -71,6 +78,15 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function DashboardPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+
+  const [items, setItems] = useState<InventoryItem[]>(seedItems);
+  const [logs, setLogs] = useState<WithdrawalLog[]>(seedLogs);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [qty, setQty] = useState(1);
+  const [reason, setReason] = useState("");
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
   const todayCheckIns = bookings.filter(
     (b) => b.checkIn === "2026-04-03" && b.status === "checked_in"
@@ -80,16 +96,57 @@ export default function DashboardPage() {
   );
   const openOrders = orders.filter((o) => o.status === "open");
   const occupiedCount = rooms.filter((r) => r.status === "occupied").length;
-  const lowStockItems = inventoryItems.filter((i) => i.currentStock <= i.minThreshold);
+  const lowStockItems = items.filter((i) => i.currentStock <= i.minThreshold);
+
+  const selectedItem = items.find((i) => i.id === selectedItemId);
+
+  function handleWithdraw() {
+    if (!selectedItem || qty < 1) return;
+    const newLog: WithdrawalLog = {
+      id: `WD-${Date.now()}`,
+      inventoryItemId: selectedItem.id,
+      inventoryItemName: selectedItem.name,
+      quantity: qty,
+      unit: selectedItem.unit,
+      reason,
+      requestedBy: user?.name ?? "Staff",
+      timestamp: new Date().toISOString(),
+    };
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === selectedItem.id
+          ? { ...i, currentStock: Math.max(0, i.currentStock - qty) }
+          : i
+      )
+    );
+    setLogs((prev) => [newLog, ...prev]);
+    setWithdrawSuccess(true);
+    setTimeout(() => {
+      setWithdrawOpen(false);
+      setWithdrawSuccess(false);
+      setSelectedItemId("");
+      setQty(1);
+      setReason("");
+    }, 1200);
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-charcoal-800">{t("dash.title")}</h1>
-        <p className="text-sm text-charcoal-400">
-          Thursday, April 3, 2026 &mdash; {t("dash.subtitle")}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-charcoal-800">{t("dash.title")}</h1>
+          <p className="text-sm text-charcoal-400">
+            Thursday, April 3, 2026 &mdash; {t("dash.subtitle")}
+          </p>
+        </div>
+        <button
+          onClick={() => setWithdrawOpen(true)}
+          className="flex items-center gap-2 rounded-lg bg-wood-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-wood-500"
+        >
+          <Minus size={16} />
+          {t("withdraw.title")}
+        </button>
       </div>
 
       {/* Low Stock Alert */}
@@ -293,6 +350,36 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Recent Withdrawals */}
+      {logs.length > 0 && (
+        <div className="rounded-xl border border-sage-200 bg-white shadow-sm">
+          <div className="border-b border-sage-100 px-5 py-4">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-charcoal-700">
+              <Package size={16} />
+              {t("withdraw.log")}
+            </h2>
+          </div>
+          <div className="divide-y divide-sage-100">
+            {logs.slice(0, 5).map((log) => (
+              <div key={log.id} className="flex items-center justify-between px-5 py-3">
+                <div>
+                  <p className="text-sm font-medium text-charcoal-700">{log.inventoryItemName}</p>
+                  <p className="text-xs text-charcoal-400">{log.reason} &middot; {log.requestedBy}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-charcoal-700">
+                    -{log.quantity} {log.unit}
+                  </p>
+                  <p className="text-xs text-charcoal-400">
+                    {new Date(log.timestamp).toLocaleDateString("th-TH")}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Room Status Overview */}
       <div className="rounded-xl border border-sage-200 bg-white shadow-sm">
         <div className="border-b border-sage-100 px-5 py-4">
@@ -321,6 +408,120 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Quick Withdraw Modal */}
+      {withdrawOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-sage-100 px-6 py-4">
+              <h2 className="flex items-center gap-2 text-base font-semibold text-charcoal-800">
+                <Minus size={18} className="text-wood-600" />
+                {t("withdraw.title")}
+              </h2>
+              <button
+                onClick={() => {
+                  setWithdrawOpen(false);
+                  setSelectedItemId("");
+                  setQty(1);
+                  setReason("");
+                  setWithdrawSuccess(false);
+                }}
+                className="rounded-lg p-1.5 text-charcoal-400 hover:bg-sage-50 hover:text-charcoal-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {withdrawSuccess ? (
+              <div className="px-6 py-10 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                  <Package size={22} className="text-emerald-600" />
+                </div>
+                <p className="font-semibold text-charcoal-800">{t("withdraw.success")}</p>
+              </div>
+            ) : (
+              <div className="space-y-4 px-6 py-5">
+                {/* Item select */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-charcoal-700">
+                    {t("withdraw.item")}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedItemId}
+                      onChange={(e) => setSelectedItemId(e.target.value)}
+                      className="w-full appearance-none rounded-lg border border-sage-200 bg-sage-50 px-3.5 py-2.5 pr-9 text-sm text-charcoal-800 outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-200"
+                    >
+                      <option value="">— select —</option>
+                      {items.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} ({item.currentStock} {item.unit} remaining)
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
+                  </div>
+                </div>
+
+                {/* Quantity */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-charcoal-700">
+                    {t("withdraw.quantity")}
+                    {selectedItem && (
+                      <span className="ml-2 font-normal text-charcoal-400">
+                        (max {selectedItem.currentStock} {selectedItem.unit})
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={selectedItem?.currentStock ?? 9999}
+                    value={qty}
+                    onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full rounded-lg border border-sage-200 bg-sage-50 px-3.5 py-2.5 text-sm text-charcoal-800 outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-200"
+                  />
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-charcoal-700">
+                    {t("withdraw.reason")}
+                  </label>
+                  <input
+                    type="text"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="e.g. Used in cafe, Requested by TH-01"
+                    className="w-full rounded-lg border border-sage-200 bg-sage-50 px-3.5 py-2.5 text-sm text-charcoal-800 outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-200"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => {
+                      setWithdrawOpen(false);
+                      setSelectedItemId("");
+                      setQty(1);
+                      setReason("");
+                    }}
+                    className="flex-1 rounded-lg border border-sage-200 px-4 py-2.5 text-sm font-medium text-charcoal-600 transition hover:bg-sage-50"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button
+                    onClick={handleWithdraw}
+                    disabled={!selectedItemId || qty < 1 || (selectedItem ? qty > selectedItem.currentStock : false)}
+                    className="flex-1 rounded-lg bg-wood-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-wood-500 disabled:opacity-50"
+                  >
+                    {t("withdraw.confirm")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BedDouble,
@@ -9,26 +9,45 @@ import {
   TreePine,
   Package,
   BarChart3,
+  Users,
+  Settings,
   Menu,
   X,
   Globe,
+  LogOut,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const { locale, setLocale, t } = useI18n();
+  const { user, logout, hasRole } = useAuth();
 
-  const navItems = [
-    { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
-    { href: "/bookings", label: t("nav.frontDesk"), icon: BedDouble },
-    { href: "/pos", label: t("nav.pos"), icon: UtensilsCrossed },
-    { href: "/activities", label: t("nav.activities"), icon: TreePine },
-    { href: "/inventory", label: t("nav.inventory"), icon: Package },
-    { href: "/reports", label: t("nav.reports"), icon: BarChart3 },
+  const isAdmin = hasRole("admin");
+
+  const allNavItems = [
+    { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard, adminOnly: false },
+    { href: "/bookings", label: t("nav.frontDesk"), icon: BedDouble, adminOnly: false },
+    { href: "/pos", label: t("nav.pos"), icon: UtensilsCrossed, adminOnly: false },
+    { href: "/activities", label: t("nav.activities"), icon: TreePine, adminOnly: false },
+    { href: "/housekeeping", label: t("nav.housekeeping"), icon: Sparkles, adminOnly: false },
+    { href: "/guests", label: t("nav.guests"), icon: Users, adminOnly: false },
+    { href: "/inventory", label: t("nav.inventory"), icon: Package, adminOnly: true },
+    { href: "/reports", label: t("nav.reports"), icon: BarChart3, adminOnly: true },
+    { href: "/admin", label: t("nav.admin"), icon: Settings, adminOnly: true },
   ];
+
+  const navItems = allNavItems.filter((item) => !item.adminOnly || isAdmin);
+
+  function handleLogout() {
+    logout();
+    router.push("/login");
+  }
 
   return (
     <>
@@ -94,16 +113,42 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Language Toggle + Footer */}
-        <div className="border-t border-sage-700 px-4 py-4 space-y-3">
+        {/* Footer — user + lang + logout */}
+        <div className="border-t border-sage-700 px-4 py-4 space-y-2">
+          {/* Logged-in user */}
+          {user && (
+            <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sage-600 text-xs font-bold">
+                {user.avatarInitials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-white">{user.name}</p>
+                <p className="text-xs text-sage-400">
+                  {user.role === "admin" ? t("auth.role.admin") : t("auth.role.staff")}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Language Toggle */}
           <button
             onClick={() => setLocale(locale === "en" ? "th" : "en")}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sage-200 transition-colors hover:bg-sage-700 hover:text-white"
           >
             <Globe size={18} />
-            <span>{locale === "en" ? "TH" : "EN"} — {locale === "en" ? "ภาษาไทย" : "English"}</span>
+            <span>{locale === "en" ? "TH — ภาษาไทย" : "EN — English"}</span>
           </button>
-          <p className="px-3 text-xs text-sage-400">v2.0 &middot; PMS + POS</p>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sage-200 transition-colors hover:bg-red-700/40 hover:text-red-300"
+          >
+            <LogOut size={18} />
+            <span>{t("auth.logout")}</span>
+          </button>
+
+          <p className="px-3 text-xs text-sage-500">v3.0 &middot; PMS + POS</p>
         </div>
       </aside>
     </>

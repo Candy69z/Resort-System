@@ -10,9 +10,8 @@ import {
   LogOut,
   Calendar,
 } from "lucide-react";
-import { rooms, bookings as initialBookings } from "@/lib/mock-data";
-import { orders } from "@/lib/mock-data";
-import type { Booking, RoomStatus, PaymentMethod } from "@/lib/types";
+import { rooms, bookings as initialBookings, orders, guestProfiles } from "@/lib/mock-data";
+import type { Booking, RoomStatus, PaymentMethod, MembershipTier } from "@/lib/types";
 import PaymentForm from "@/components/PaymentForm";
 import { useI18n } from "@/lib/i18n";
 
@@ -38,6 +37,20 @@ function Badge({ status, map }: { status: string; map: Record<string, string> })
   );
 }
 
+function MemberBadge({ tier }: { tier: MembershipTier }) {
+  const config: Record<MembershipTier, { label: string; cls: string }> = {
+    gold: { label: "Gold Member", cls: "bg-amber-100 text-amber-800" },
+    silver: { label: "Silver Member", cls: "bg-slate-100 text-slate-700" },
+    standard: { label: "Member", cls: "bg-sage-100 text-sage-700" },
+  };
+  const { label, cls } = config[tier];
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 export default function BookingsPage() {
   const { t } = useI18n();
   const [bookingList, setBookingList] = useState<Booking[]>(initialBookings);
@@ -55,6 +68,20 @@ export default function BookingsPage() {
   const [formBreakfast, setFormBreakfast] = useState(false);
   const [formBreakfastQty, setFormBreakfastQty] = useState(1);
   const [formMooKratha, setFormMooKratha] = useState(false);
+
+  const matchedGuest = formPhone.length >= 9
+    ? guestProfiles.find((g) => g.phone.replace(/-/g, "") === formPhone.replace(/-/g, ""))
+    : undefined;
+
+  function handlePhoneChange(value: string) {
+    setFormPhone(value);
+    if (value.length >= 9) {
+      const found = guestProfiles.find(
+        (g) => g.phone.replace(/-/g, "") === value.replace(/-/g, "")
+      );
+      if (found) setFormName(found.name);
+    }
+  }
 
   const filteredBookings = bookingList.filter(
     (b) =>
@@ -95,11 +122,8 @@ export default function BookingsPage() {
 
     setBookingList([...bookingList, newBooking]);
     setShowForm(false);
-    setFormRoom("");
-    setFormName("");
-    setFormPhone("");
-    setFormBreakfast(false);
-    setFormMooKratha(false);
+    setFormRoom(""); setFormName(""); setFormPhone("");
+    setFormBreakfast(false); setFormMooKratha(false);
   };
 
   const handleCheckIn = (bookingId: string) => {
@@ -340,16 +364,25 @@ export default function BookingsPage() {
                     placeholder="Full name"
                     className="w-full rounded-lg border border-sage-200 px-3 py-2 text-sm text-charcoal-700 placeholder:text-charcoal-300 focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400"
                   />
+                  {matchedGuest && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <MemberBadge tier={matchedGuest.membershipTier} />
+                      <span className="text-xs text-charcoal-400">{matchedGuest.visitCount} visits</span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-charcoal-600 mb-1">Phone</label>
                   <input
                     type="tel"
                     value={formPhone}
-                    onChange={(e) => setFormPhone(e.target.value)}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="08X-XXX-XXXX"
                     className="w-full rounded-lg border border-sage-200 px-3 py-2 text-sm text-charcoal-700 placeholder:text-charcoal-300 focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400"
                   />
+                  {matchedGuest && (
+                    <p className="mt-1 text-xs text-emerald-600">Guest profile found</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

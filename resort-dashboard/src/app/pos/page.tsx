@@ -13,22 +13,190 @@ import {
   Receipt,
   ShoppingBag,
   AlertTriangle,
+  MessageSquare,
+  SplitSquareHorizontal,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { menuItems, rooms, orders as initialOrders, inventoryItems as initialInventory } from "@/lib/mock-data";
 import type { Order, OrderItem, MenuItem, InventoryItem, PaymentMethod } from "@/lib/types";
 import PaymentForm from "@/components/PaymentForm";
 import { useI18n } from "@/lib/i18n";
 
+// ── Category config ────────────────────────────────────────
 const categoryConfig = {
-  coffee: { label: "Coffee", icon: Coffee, color: "bg-wood-100 text-wood-700 border-wood-200" },
-  tea: { label: "Tea", icon: Coffee, color: "bg-sage-100 text-sage-700 border-sage-200" },
-  cocktail: { label: "Cocktails", icon: Wine, color: "bg-purple-50 text-purple-700 border-purple-200" },
-  food: { label: "Food", icon: UtensilsCrossed, color: "bg-amber-50 text-amber-700 border-amber-200" },
-  special: { label: "Specials", icon: Flame, color: "bg-red-50 text-red-700 border-red-200" },
+  coffee:   { label: "Coffee",   icon: Coffee,         color: "bg-wood-100 text-wood-700 border-wood-200",      activeColor: "bg-wood-600 text-white border-wood-600" },
+  tea:      { label: "Tea",      icon: Coffee,         color: "bg-sage-100 text-sage-700 border-sage-200",       activeColor: "bg-sage-600 text-white border-sage-600" },
+  cocktail: { label: "Cocktails",icon: Wine,           color: "bg-purple-50 text-purple-700 border-purple-200",  activeColor: "bg-purple-700 text-white border-purple-700" },
+  food:     { label: "Food",     icon: UtensilsCrossed,color: "bg-amber-50 text-amber-700 border-amber-200",     activeColor: "bg-amber-600 text-white border-amber-600" },
+  special:  { label: "Specials", icon: Flame,          color: "bg-red-50 text-red-700 border-red-200",          activeColor: "bg-red-600 text-white border-red-600" },
 };
-
 type Category = keyof typeof categoryConfig;
 
+// ── Item Note Modal ────────────────────────────────────────
+function ItemNoteModal({
+  item,
+  currentNote,
+  onSave,
+  onClose,
+}: {
+  item: OrderItem;
+  currentNote: string;
+  onSave: (note: string) => void;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const [note, setNote] = useState(currentNote);
+  const quickNotes = [
+    "หวานน้อย / Less Sweet",
+    "ไม่หวาน / No Sugar",
+    "ไม่เผ็ด / Not Spicy",
+    "เผ็ดมาก / Extra Spicy",
+    "ไม่ใส่น้ำแข็ง / No Ice",
+    "น้ำแข็งน้อย / Less Ice",
+    "ไม่ใส่ผัก / No Vegetables",
+    "ข้าวเพิ่ม / Extra Rice",
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center p-0 sm:p-4">
+      <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl">
+        <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-charcoal-200 sm:hidden" />
+        <div className="flex items-center justify-between border-b border-sage-100 px-5 py-4 pt-5">
+          <div>
+            <h2 className="text-base font-semibold text-charcoal-800">{t("pos.addNote")}</h2>
+            <p className="text-xs text-charcoal-400">{item.name}</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-charcoal-400 hover:bg-sage-50">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t("pos.notePlaceholder")}
+            rows={2}
+            className="w-full rounded-lg border border-sage-200 bg-sage-50 px-3.5 py-2.5 text-sm text-charcoal-800 outline-none resize-none focus:border-sage-500 focus:ring-2 focus:ring-sage-200"
+          />
+          {/* Quick-tap notes */}
+          <div className="flex flex-wrap gap-1.5">
+            {quickNotes.map((qn) => (
+              <button
+                key={qn}
+                onClick={() => setNote(qn)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium border transition ${
+                  note === qn
+                    ? "bg-sage-600 text-white border-sage-600"
+                    : "border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                }`}
+              >
+                {qn}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => { onSave(""); onClose(); }}
+              className="flex-1 rounded-xl border border-sage-200 py-3 text-sm font-medium text-charcoal-500 hover:bg-sage-50"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => { onSave(note); onClose(); }}
+              className="flex-1 rounded-xl bg-sage-700 py-3 text-sm font-semibold text-white hover:bg-sage-600"
+            >
+              {t("common.confirm")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Split Bill Modal ───────────────────────────────────────
+function SplitBillModal({
+  total,
+  onClose,
+}: {
+  total: number;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const [ways, setWays] = useState(2);
+  const perPerson = Math.ceil(total / ways);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center p-0 sm:p-4">
+      <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl">
+        <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-charcoal-200 sm:hidden" />
+        <div className="flex items-center justify-between border-b border-sage-100 px-5 py-4 pt-5">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-charcoal-800">
+            <SplitSquareHorizontal size={17} />
+            {t("pos.splitBill")}
+          </h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-charcoal-400 hover:bg-sage-50">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="px-5 py-5 space-y-5">
+          <div className="text-center">
+            <p className="text-sm text-charcoal-400">{t("common.total")}</p>
+            <p className="text-3xl font-bold text-charcoal-800">฿{total.toLocaleString()}</p>
+          </div>
+
+          {/* Ways selector */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-charcoal-700">{t("pos.splitBy")}</label>
+            <div className="flex gap-2">
+              {[2, 3, 4, 5, 6].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setWays(n)}
+                  className={`flex-1 rounded-xl py-3 text-sm font-bold transition ${
+                    ways === n
+                      ? "bg-sage-700 text-white"
+                      : "border border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Per-person breakdown */}
+          <div className="rounded-xl bg-sage-50 p-4 space-y-2">
+            {Array.from({ length: ways }).map((_, i) => (
+              <div key={i} className="flex justify-between text-sm">
+                <span className="text-charcoal-500">Person {i + 1}</span>
+                <span className="font-semibold text-charcoal-800">
+                  ฿{i === ways - 1
+                    ? (total - perPerson * (ways - 1)).toLocaleString()
+                    : perPerson.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-charcoal-400">
+            ≈ ฿{perPerson.toLocaleString()} {t("pos.perPerson")}
+          </p>
+
+          <button
+            onClick={onClose}
+            className="w-full rounded-xl bg-sage-700 py-3.5 text-sm font-semibold text-white hover:bg-sage-600"
+          >
+            <Check size={15} className="inline mr-1.5" />
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main POS Page ──────────────────────────────────────────
 export default function POSPage() {
   const { t } = useI18n();
   const [orderList, setOrderList] = useState<Order[]>(initialOrders);
@@ -39,12 +207,12 @@ export default function POSPage() {
   const [showOpenBills, setShowOpenBills] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [settlingOrder, setSettlingOrder] = useState<Order | null>(null);
+  const [noteModal, setNoteModal] = useState<OrderItem | null>(null);
+  const [showSplitBill, setShowSplitBill] = useState(false);
 
   const occupiedRooms = rooms.filter((r) => r.status === "occupied");
   const openOrders = orderList.filter((o) => o.status === "open");
-
   const filteredMenu = menuItems.filter((m) => m.category === activeCategory && m.available);
-
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const addToCart = (item: MenuItem) => {
@@ -62,14 +230,17 @@ export default function POSPage() {
   const updateCartQty = (menuItemId: string, delta: number) => {
     setCart((prev) =>
       prev
-        .map((c) =>
-          c.menuItemId === menuItemId ? { ...c, quantity: c.quantity + delta } : c
-        )
+        .map((c) => c.menuItemId === menuItemId ? { ...c, quantity: c.quantity + delta } : c)
         .filter((c) => c.quantity > 0)
     );
   };
 
-  // Deduct inventory for sold items
+  const updateCartNote = (menuItemId: string, note: string) => {
+    setCart((prev) =>
+      prev.map((c) => c.menuItemId === menuItemId ? { ...c, note } : c)
+    );
+  };
+
   const deductInventory = (items: OrderItem[]) => {
     setInventory((prev) => {
       const updated = [...prev];
@@ -91,16 +262,9 @@ export default function POSPage() {
 
   const handlePlaceOrder = () => {
     if (cart.length === 0) return;
-
-    // If walk-in (no room), show payment form
-    if (!selectedRoom) {
-      setShowPayment(true);
-      return;
-    }
+    if (!selectedRoom) { setShowPayment(true); return; }
 
     const room = rooms.find((r) => r.id === selectedRoom);
-
-    // Check if there's an existing open order for this room
     const existingOrder = orderList.find((o) => o.roomId === selectedRoom && o.status === "open");
 
     if (existingOrder) {
@@ -110,17 +274,10 @@ export default function POSPage() {
           const mergedItems = [...o.items];
           for (const cartItem of cart) {
             const existing = mergedItems.find((m) => m.menuItemId === cartItem.menuItemId);
-            if (existing) {
-              existing.quantity += cartItem.quantity;
-            } else {
-              mergedItems.push({ ...cartItem });
-            }
+            if (existing) { existing.quantity += cartItem.quantity; }
+            else { mergedItems.push({ ...cartItem }); }
           }
-          return {
-            ...o,
-            items: mergedItems,
-            total: mergedItems.reduce((s, i) => s + i.price * i.quantity, 0),
-          };
+          return { ...o, items: mergedItems, total: mergedItems.reduce((s, i) => s + i.price * i.quantity, 0) };
         })
       );
     } else {
@@ -135,7 +292,6 @@ export default function POSPage() {
       };
       setOrderList([...orderList, newOrder]);
     }
-
     deductInventory(cart);
     setCart([]);
     setSelectedRoom("");
@@ -147,12 +303,7 @@ export default function POSPage() {
       items: [...cart],
       status: "paid",
       total: cartTotal,
-      payment: {
-        method,
-        refNo,
-        slipImageUrl: slipFile,
-        paidAt: new Date().toISOString(),
-      },
+      payment: { method, refNo, slipImageUrl: slipFile, paidAt: new Date().toISOString() },
       createdAt: new Date().toISOString(),
       closedAt: new Date().toISOString(),
     };
@@ -168,45 +319,34 @@ export default function POSPage() {
     setOrderList((prev) =>
       prev.map((o) =>
         o.id === settlingOrder.id
-          ? {
-              ...o,
-              status: "paid" as const,
-              payment: { method, refNo, slipImageUrl: slipFile, paidAt: new Date().toISOString() },
-              closedAt: new Date().toISOString(),
-            }
+          ? { ...o, status: "paid" as const, payment: { method, refNo, slipImageUrl: slipFile, paidAt: new Date().toISOString() }, closedAt: new Date().toISOString() }
           : o
       )
     );
     setSettlingOrder(null);
   };
 
-  // Low-stock warnings for items in cart
   const cartStockWarnings = cart
     .map((ci) => {
       const menuItem = menuItems.find((m) => m.id === ci.menuItemId);
       if (!menuItem?.inventoryItemId) return null;
       const inv = inventory.find((i) => i.id === menuItem.inventoryItemId);
-      if (inv && inv.currentStock <= inv.minThreshold) return inv;
-      return null;
+      return inv && inv.currentStock <= inv.minThreshold ? inv : null;
     })
     .filter(Boolean) as InventoryItem[];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal-800">{t("nav.pos")}</h1>
-          <p className="text-sm text-charcoal-400">
-            Point of Sale &mdash; Order & bill to room
-          </p>
+          <p className="text-sm text-charcoal-400">Point of Sale — Order & bill to room</p>
         </div>
         <button
           onClick={() => setShowOpenBills(!showOpenBills)}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium shadow-sm transition-colors ${
-            showOpenBills
-              ? "bg-wood-600 text-white"
-              : "border border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm transition-colors ${
+            showOpenBills ? "bg-wood-600 text-white" : "border border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
           }`}
         >
           <Receipt size={16} />
@@ -227,14 +367,12 @@ export default function POSPage() {
                   <p className="text-sm font-medium text-charcoal-700">
                     {o.roomName ?? t("common.walkin")} <span className="text-charcoal-400">({o.id})</span>
                   </p>
-                  <p className="text-xs text-charcoal-400">
+                  <p className="text-xs text-charcoal-400 truncate max-w-xs">
                     {o.items.map((i) => `${i.name} x${i.quantity}`).join(", ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-charcoal-700">
-                    ฿{o.total.toLocaleString()}
-                  </span>
+                  <span className="text-sm font-semibold text-charcoal-700">฿{o.total.toLocaleString()}</span>
                   <button
                     onClick={() => setSettlingOrder(o)}
                     className="rounded-lg bg-wood-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-wood-700"
@@ -251,69 +389,66 @@ export default function POSPage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Menu Section (Left 2/3) */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* ── Menu Section (Left 2/3) ── */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Category Tabs */}
-          <div className="flex flex-wrap gap-2">
+          {/* Category Tabs — large touch targets */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:flex-wrap">
             {(Object.keys(categoryConfig) as Category[]).map((cat) => {
-              const { label, icon: Icon, color } = categoryConfig[cat];
+              const { label, icon: Icon, color, activeColor } = categoryConfig[cat];
+              const isActive = activeCategory === cat;
               return (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
-                    activeCategory === cat
-                      ? color
-                      : "border-sage-200 bg-white text-charcoal-500 hover:bg-sage-50"
+                  className={`shrink-0 inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-all active:scale-95 ${
+                    isActive ? activeColor : color
                   }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                   {label}
                 </button>
               );
             })}
           </div>
 
-          {/* Menu Grid */}
+          {/* Menu Grid — touch-optimised larger cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {filteredMenu.map((item) => {
               const inCart = cart.find((c) => c.menuItemId === item.id);
-              const inv = item.inventoryItemId
-                ? inventory.find((i) => i.id === item.inventoryItemId)
-                : null;
+              const inv = item.inventoryItemId ? inventory.find((i) => i.id === item.inventoryItemId) : null;
               const isLowStock = inv ? inv.currentStock <= inv.minThreshold : false;
 
               return (
                 <button
                   key={item.id}
                   onClick={() => addToCart(item)}
-                  className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-md ${
+                  className={`relative rounded-2xl border p-4 text-left transition-all active:scale-95 hover:shadow-md min-h-[110px] flex flex-col justify-between ${
                     inCart
-                      ? "border-sage-400 bg-sage-50 ring-1 ring-sage-400"
+                      ? "border-sage-400 bg-sage-50 ring-2 ring-sage-400"
                       : "border-sage-200 bg-white hover:border-sage-300"
                   }`}
                 >
-                  <p className="text-sm font-medium text-charcoal-700">{item.name}</p>
-                  {item.description && (
-                    <p className="mt-0.5 text-xs text-charcoal-400 line-clamp-1">{item.description}</p>
-                  )}
-                  <p className="mt-2 text-base font-semibold text-sage-700">
-                    ฿{item.price}
-                  </p>
-                  {item.availableFrom && (
-                    <p className="mt-1 text-xs text-charcoal-300">
-                      {item.availableFrom}–{item.availableTo}
-                    </p>
-                  )}
-                  {inv && (
-                    <p className={`mt-1 text-xs ${isLowStock ? "text-amber-600 font-medium" : "text-charcoal-300"}`}>
-                      {isLowStock && <AlertTriangle size={10} className="inline mr-0.5" />}
-                      Stock: {inv.currentStock} {inv.unit}
-                    </p>
-                  )}
+                  <div>
+                    <p className="text-base font-semibold text-charcoal-800 leading-snug">{item.name}</p>
+                    {item.description && (
+                      <p className="mt-0.5 text-xs text-charcoal-400 line-clamp-1">{item.description}</p>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-xl font-bold text-sage-700">฿{item.price}</p>
+                    {item.availableFrom && (
+                      <p className="text-xs text-charcoal-300">{item.availableFrom}–{item.availableTo}</p>
+                    )}
+                    {inv && (
+                      <p className={`text-xs mt-0.5 ${isLowStock ? "text-amber-600 font-medium" : "text-charcoal-300"}`}>
+                        {isLowStock && <AlertTriangle size={10} className="inline mr-0.5" />}
+                        {inv.currentStock} {inv.unit}
+                      </p>
+                    )}
+                  </div>
                   {inCart && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-sage-600 text-xs font-bold text-white">
+                    <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-sage-600 text-xs font-bold text-white shadow">
                       {inCart.quantity}
                     </span>
                   )}
@@ -323,12 +458,18 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* Cart / Order Panel (Right 1/3) */}
-        <div className="rounded-xl border border-sage-200 bg-white shadow-sm">
+        {/* ── Cart Panel (Right 1/3) ── */}
+        <div className="rounded-2xl border border-sage-200 bg-white shadow-sm flex flex-col">
+          {/* Cart header */}
           <div className="border-b border-sage-100 px-5 py-4">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-charcoal-700">
               <ShoppingBag size={16} />
               Current Order
+              {cart.length > 0 && (
+                <span className="ml-auto rounded-full bg-sage-600 px-2 py-0.5 text-xs font-bold text-white">
+                  {cart.reduce((s, i) => s + i.quantity, 0)}
+                </span>
+              )}
             </h2>
           </div>
 
@@ -338,64 +479,82 @@ export default function POSPage() {
               <BedDouble size={14} />
               Bill to Room (optional)
             </label>
-            <select
-              value={selectedRoom}
-              onChange={(e) => setSelectedRoom(e.target.value)}
-              className="w-full rounded-lg border border-sage-200 bg-sage-50 px-3 py-2 text-sm text-charcoal-700 focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400"
-            >
-              <option value="">{t("common.walkin")} ({t("common.pay")} now)</option>
-              {occupiedRooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.id} — {r.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedRoom}
+                onChange={(e) => setSelectedRoom(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-sage-200 bg-sage-50 px-3.5 py-2.5 pr-9 text-sm text-charcoal-700 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-200"
+              >
+                <option value="">{t("common.walkin")} — pay now</option>
+                {occupiedRooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.id} — {r.name}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
+            </div>
             {selectedRoom && (
-              <p className="mt-1.5 text-xs text-wood-600">
-                Charges will be added to the room tab and settled at check-out.
-              </p>
+              <p className="mt-1.5 text-xs text-wood-600">Charges added to room tab, settled at check-out.</p>
             )}
           </div>
 
-          {/* Cart Items */}
-          <div className="max-h-80 divide-y divide-sage-100 overflow-y-auto">
+          {/* Cart Items — large touch targets */}
+          <div className="flex-1 divide-y divide-sage-100 overflow-y-auto max-h-[55vh]">
             {cart.length === 0 ? (
-              <p className="px-5 py-10 text-center text-sm text-charcoal-300">
-                Tap menu items to add
-              </p>
+              <p className="px-5 py-12 text-center text-sm text-charcoal-300">Tap menu items to add</p>
             ) : (
               cart.map((item) => (
-                <div key={item.menuItemId} className="flex items-center gap-3 px-5 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-charcoal-700 truncate">{item.name}</p>
-                    <p className="text-xs text-charcoal-400">฿{item.price} each</p>
+                <div key={item.menuItemId} className="px-4 py-3 space-y-2">
+                  {/* Item name + price */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-charcoal-800 leading-tight">{item.name}</p>
+                      {item.note && (
+                        <p className="mt-0.5 text-xs text-sage-600 italic">📝 {item.note}</p>
+                      )}
+                    </div>
+                    <p className="text-sm font-bold text-charcoal-700 shrink-0">
+                      ฿{(item.price * item.quantity).toLocaleString()}
+                    </p>
                   </div>
+
+                  {/* Controls row */}
                   <div className="flex items-center gap-2">
+                    {/* Qty stepper — large */}
                     <button
                       onClick={() => updateCartQty(item.menuItemId, -1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-sage-200 text-charcoal-500 hover:bg-sage-50"
+                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-sage-100 text-sage-700 font-bold text-lg hover:bg-sage-200 active:scale-90 transition"
                     >
-                      <Minus size={14} />
+                      −
                     </button>
-                    <span className="w-6 text-center text-sm font-medium text-charcoal-700">
+                    <span className="w-8 text-center text-base font-bold text-charcoal-700">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateCartQty(item.menuItemId, 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-sage-200 text-charcoal-500 hover:bg-sage-50"
+                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-sage-600 text-white font-bold text-lg hover:bg-sage-700 active:scale-90 transition"
                     >
-                      <Plus size={14} />
+                      +
+                    </button>
+
+                    {/* Add Note */}
+                    <button
+                      onClick={() => setNoteModal(item)}
+                      className={`ml-auto flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                        item.note
+                          ? "border-sage-400 bg-sage-50 text-sage-700"
+                          : "border-charcoal-200 text-charcoal-400 hover:bg-sage-50"
+                      }`}
+                    >
+                      <MessageSquare size={13} />
+                      {item.note ? "Edit" : t("pos.addNote")}
                     </button>
                   </div>
-                  <p className="w-16 text-right text-sm font-medium text-charcoal-700">
-                    ฿{(item.price * item.quantity).toLocaleString()}
-                  </p>
                 </div>
               ))
             )}
           </div>
 
-          {/* Low stock warnings */}
+          {/* Stock warnings */}
           {cartStockWarnings.length > 0 && (
             <div className="border-t border-amber-100 bg-amber-50/50 px-5 py-2">
               {cartStockWarnings.map((inv) => (
@@ -407,24 +566,35 @@ export default function POSPage() {
             </div>
           )}
 
-          {/* Total & Submit */}
+          {/* Total & Actions */}
           {cart.length > 0 && (
             <div className="border-t border-sage-100 px-5 py-4 space-y-3">
-              <div className="flex justify-between text-base font-semibold">
+              <div className="flex justify-between text-lg font-bold">
                 <span className="text-charcoal-700">{t("common.total")}</span>
                 <span className="text-sage-700">฿{cartTotal.toLocaleString()}</span>
               </div>
+
+              {/* Split Bill */}
+              <button
+                onClick={() => setShowSplitBill(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-sage-200 py-2.5 text-sm font-medium text-charcoal-600 hover:bg-sage-50 transition"
+              >
+                <SplitSquareHorizontal size={15} />
+                {t("pos.splitBill")}
+              </button>
+
               <button
                 onClick={handlePlaceOrder}
-                className="w-full rounded-lg bg-sage-600 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sage-700"
+                className="w-full rounded-xl bg-sage-600 py-4 text-base font-bold text-white shadow-sm transition hover:bg-sage-700 active:scale-[0.98]"
               >
                 {selectedRoom
-                  ? `Add to ${rooms.find((r) => r.id === selectedRoom)?.name} Tab`
+                  ? `Add to ${rooms.find((r) => r.id === selectedRoom)?.name}`
                   : `${t("common.pay")} ฿${cartTotal.toLocaleString()}`}
               </button>
+
               <button
                 onClick={() => setCart([])}
-                className="w-full rounded-lg border border-sage-200 py-2 text-sm font-medium text-charcoal-500 hover:bg-sage-50"
+                className="w-full rounded-xl border border-sage-200 py-2.5 text-sm font-medium text-charcoal-500 hover:bg-sage-50"
               >
                 Clear Cart
               </button>
@@ -436,18 +606,16 @@ export default function POSPage() {
       {/* Walk-in Payment Modal */}
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-sage-100 px-6 py-4">
               <h2 className="text-lg font-semibold text-charcoal-800">{t("common.pay")} — {t("common.walkin")}</h2>
-              <button onClick={() => setShowPayment(false)} className="text-charcoal-400 hover:text-charcoal-600">
-                <X size={20} />
-              </button>
+              <button onClick={() => setShowPayment(false)} className="text-charcoal-400 hover:text-charcoal-600"><X size={20} /></button>
             </div>
             <div className="px-6 py-5 space-y-3">
               <div className="space-y-1">
                 {cart.map((item) => (
                   <div key={item.menuItemId} className="flex justify-between text-sm">
-                    <span className="text-charcoal-600">{item.name} x{item.quantity}</span>
+                    <span className="text-charcoal-600">{item.name} x{item.quantity}{item.note && <span className="ml-1 text-sage-500 text-xs">({item.note})</span>}</span>
                     <span className="text-charcoal-700">฿{(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
@@ -459,17 +627,13 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* Settle Open Bill Modal */}
+      {/* Settle Bill Modal */}
       {settlingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-sage-100 px-6 py-4">
-              <h2 className="text-lg font-semibold text-charcoal-800">
-                Settle — {settlingOrder.roomName ?? t("common.walkin")}
-              </h2>
-              <button onClick={() => setSettlingOrder(null)} className="text-charcoal-400 hover:text-charcoal-600">
-                <X size={20} />
-              </button>
+              <h2 className="text-lg font-semibold text-charcoal-800">Settle — {settlingOrder.roomName ?? t("common.walkin")}</h2>
+              <button onClick={() => setSettlingOrder(null)} className="text-charcoal-400 hover:text-charcoal-600"><X size={20} /></button>
             </div>
             <div className="px-6 py-5 space-y-3">
               <div className="space-y-1">
@@ -485,6 +649,24 @@ export default function POSPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Item Note Modal */}
+      {noteModal && (
+        <ItemNoteModal
+          item={noteModal}
+          currentNote={noteModal.note ?? ""}
+          onSave={(note) => updateCartNote(noteModal.menuItemId, note)}
+          onClose={() => setNoteModal(null)}
+        />
+      )}
+
+      {/* Split Bill Modal */}
+      {showSplitBill && (
+        <SplitBillModal
+          total={cartTotal}
+          onClose={() => setShowSplitBill(false)}
+        />
       )}
     </div>
   );

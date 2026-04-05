@@ -84,13 +84,102 @@ const dictionary: Record<string, Record<Locale, string>> = {
   "rpt.thisWeek": { en: "This Week", th: "สัปดาห์นี้" },
   "rpt.thisMonth": { en: "This Month", th: "เดือนนี้" },
   "rpt.custom": { en: "Custom", th: "กำหนดเอง" },
-  "rpt.export": { en: "Export CSV", th: "ส่งออก CSV" },
+  "rpt.export": { en: "Export Excel", th: "ส่งออก Excel" },
   "rpt.category": { en: "Category", th: "หมวดหมู่" },
   "rpt.amount": { en: "Amount", th: "จำนวนเงิน" },
   "rpt.share": { en: "Share", th: "สัดส่วน" },
   "rpt.txns": { en: "Txns", th: "รายการ" },
   "rpt.paymentBreakdown": { en: "Payment Method Breakdown", th: "สัดส่วนวิธีชำระเงิน" },
   "rpt.revenueBreakdown": { en: "Revenue Breakdown", th: "รายละเอียดรายได้" },
+
+  // Auth
+  "auth.login": { en: "Sign In", th: "เข้าสู่ระบบ" },
+  "auth.logout": { en: "Sign Out", th: "ออกจากระบบ" },
+  "auth.username": { en: "Username", th: "ชื่อผู้ใช้" },
+  "auth.password": { en: "Password", th: "รหัสผ่าน" },
+  "auth.loginError": { en: "Invalid username or password", th: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" },
+  "auth.welcome": { en: "Welcome back", th: "ยินดีต้อนรับกลับ" },
+  "auth.role.admin": { en: "Admin", th: "ผู้ดูแลระบบ" },
+  "auth.role.staff": { en: "Staff", th: "พนักงาน" },
+
+  // Guests CRM
+  "nav.guests": { en: "Guests", th: "แขก" },
+  "nav.admin": { en: "Admin", th: "ผู้ดูแล" },
+  "guests.title": { en: "Guest Profiles", th: "ข้อมูลแขก" },
+  "guests.subtitle": { en: "CRM — membership & visit history", th: "ระบบ CRM — สมาชิกและประวัติการเข้าพัก" },
+  "guests.tier.gold": { en: "Gold", th: "ทอง" },
+  "guests.tier.silver": { en: "Silver", th: "เงิน" },
+  "guests.tier.standard": { en: "Standard", th: "ทั่วไป" },
+  "guests.totalSpend": { en: "Total Spend", th: "ยอดใช้จ่ายรวม" },
+  "guests.visits": { en: "Visits", th: "ครั้ง" },
+  "guests.lastVisit": { en: "Last Visit", th: "เข้าพักล่าสุด" },
+  "guests.notes": { en: "Notes", th: "หมายเหตุ" },
+  "guests.membershipTier": { en: "Tier", th: "ระดับ" },
+  "guests.phone": { en: "Phone", th: "เบอร์โทร" },
+  "guests.addGuest": { en: "Add Guest", th: "เพิ่มแขก" },
+  "guests.goldMember": { en: "Gold Member", th: "สมาชิกทอง" },
+  "guests.silverMember": { en: "Silver Member", th: "สมาชิกเงิน" },
+
+  // Admin Settings
+  "admin.title": { en: "Admin Settings", th: "ตั้งค่าระบบ" },
+  "admin.subtitle": { en: "Manage menu & activities", th: "จัดการเมนูและกิจกรรม" },
+  "admin.menuTab": { en: "F&B Menu", th: "เมนูอาหาร & เครื่องดื่ม" },
+  "admin.activitiesTab": { en: "Activities", th: "กิจกรรม" },
+  "admin.addItem": { en: "Add Item", th: "เพิ่มรายการ" },
+  "admin.editItem": { en: "Edit", th: "แก้ไข" },
+  "admin.price": { en: "Price (฿)", th: "ราคา (฿)" },
+  "admin.available": { en: "Available", th: "พร้อมขาย" },
+  "admin.unavailable": { en: "Unavailable", th: "ไม่พร้อมขาย" },
+  "admin.category": { en: "Category", th: "หมวดหมู่" },
+  "admin.saveChanges": { en: "Save Changes", th: "บันทึก" },
+  "admin.maxSlots": { en: "Max Slots", th: "จำนวนที่นั่ง" },
+  "admin.duration": { en: "Duration", th: "ระยะเวลา" },
+
+  // Quick Withdraw
+  "withdraw.title": { en: "Quick Withdraw", th: "เบิกสินค้าด่วน" },
+  "withdraw.item": { en: "Select Item", th: "เลือกสินค้า" },
+  "withdraw.quantity": { en: "Quantity", th: "จำนวน" },
+  "withdraw.reason": { en: "Reason", th: "เหตุผล" },
+  "withdraw.confirm": { en: "Confirm Withdrawal", th: "ยืนยันการเบิก" },
+  "withdraw.log": { en: "Withdrawal Log", th: "ประวัติการเบิก" },
+  "withdraw.success": { en: "Withdrawal recorded", th: "บันทึกการเบิกเรียบร้อย" },
+
+  // Housekeeping
+  "nav.housekeeping": { en: "Housekeeping", th: "แม่บ้าน" },
+  "hk.title": { en: "Housekeeping", th: "แผนกแม่บ้าน" },
+  "hk.subtitle": { en: "Room status tracking & restock", th: "สถานะห้องและการเติมของใช้" },
+  "hk.dirty": { en: "Dirty", th: "รกรุงรัง" },
+  "hk.cleaning": { en: "Cleaning", th: "กำลังทำความสะอาด" },
+  "hk.inspected": { en: "Inspected", th: "ตรวจสอบแล้ว" },
+  "hk.ready": { en: "Ready", th: "พร้อมรับแขก" },
+  "hk.updateStatus": { en: "Update Status", th: "เปลี่ยนสถานะ" },
+  "hk.restock": { en: "Restock Room", th: "เติมของใช้" },
+  "hk.restockChecklist": { en: "Restock Checklist", th: "รายการเติมของ" },
+  "hk.confirmRestock": { en: "Confirm Restock", th: "ยืนยันการเติมของ" },
+  "hk.restockSuccess": { en: "Room restocked — inventory updated", th: "เติมของสำเร็จ — อัพเดทสต็อกแล้ว" },
+  "hk.assignedTo": { en: "Assigned to", th: "มอบหมาย" },
+  "hk.lastUpdated": { en: "Last updated", th: "อัพเดทล่าสุด" },
+  "hk.progress": { en: "Progress", th: "ความคืบหน้า" },
+  "hk.allRooms": { en: "All Rooms", th: "ทุกห้อง" },
+
+  // POS enhancements
+  "pos.addNote": { en: "Add Note", th: "เพิ่มหมายเหตุ" },
+  "pos.itemNote": { en: "Item Note", th: "หมายเหตุรายการ" },
+  "pos.notePlaceholder": { en: "e.g. Less Sweet, Not Spicy", th: "เช่น หวานน้อย, ไม่เผ็ด" },
+  "pos.splitBill": { en: "Split Bill", th: "แบ่งบิล" },
+  "pos.splitBy": { en: "Split by", th: "หารด้วย" },
+  "pos.perPerson": { en: "per person", th: "ต่อคน" },
+
+  // Reports
+  "rpt.topSales": { en: "Top F&B Sales", th: "รายการขายดีสุด" },
+  "rpt.topSalesSubtitle": { en: "Ranked by quantity sold", th: "เรียงตามจำนวนที่ขายได้" },
+  "rpt.qtySold": { en: "Qty Sold", th: "จำนวนขาย" },
+
+  // Admin sub-category
+  "admin.categoriesTab": { en: "Categories", th: "หมวดหมู่" },
+  "admin.subCategory": { en: "Sub-Category", th: "หมวดย่อย" },
+  "admin.addSubCategory": { en: "Add Sub-Category", th: "เพิ่มหมวดย่อย" },
+  "admin.mainCategory": { en: "Main Category", th: "หมวดหลัก" },
 };
 
 interface I18nContextType {

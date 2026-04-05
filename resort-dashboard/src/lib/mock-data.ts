@@ -2,35 +2,46 @@ import {
   Room,
   Booking,
   MenuItem,
+  MenuSubCategory,
   Order,
   Activity,
   ActivityBooking,
   DailyStats,
   InventoryItem,
+  GuestProfile,
+  WithdrawalLog,
+  AuthUser,
+  HousekeepingRoom,
+  RestockItem,
+  RestockLog,
+  TopSalesItem,
 } from "./types";
+
+// ============================================================
+// AUTH USERS (mock credentials)
+// ============================================================
+export const mockUsers: (AuthUser & { password: string })[] = [
+  { id: "U-001", name: "Admin Manager", username: "admin", password: "admin123", role: "admin", avatarInitials: "AM" },
+  { id: "U-002", name: "Staff Nook", username: "staff", password: "staff123", role: "staff", avatarInitials: "SN" },
+];
 
 // ============================================================
 // ROOMS
 // ============================================================
 export const rooms: Room[] = [
-  // Tree Houses
   { id: "TH-01", name: "Tree House 1", type: "tree_house", pricePerNight: 788, status: "occupied", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
   { id: "TH-02", name: "Tree House 2", type: "tree_house", pricePerNight: 788, status: "available", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
   { id: "TH-03", name: "Tree House 3", type: "tree_house", pricePerNight: 788, status: "reserved", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
-  // Rice Field
   { id: "RF-01", name: "Rice Field 1", type: "rice_field", pricePerNight: 588, status: "occupied", amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
   { id: "RF-02", name: "Rice Field 2", type: "rice_field", pricePerNight: 588, status: "occupied", amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
   { id: "RF-03", name: "Rice Field 3", type: "rice_field", pricePerNight: 588, status: "cleaning", amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
-  // Tent Houses
   { id: "TE-01", name: "Tent House 1", type: "tent_house", pricePerNight: 888, status: "occupied", amenities: ["Fan", "Water Heater"], description: "Permanent glamping tent", maxGuests: 2 },
   { id: "TE-02", name: "Tent House 2", type: "tent_house", pricePerNight: 888, status: "available", amenities: ["Fan", "Water Heater"], description: "Permanent glamping tent", maxGuests: 2 },
-  // Camping - Field View
   { id: "CF-01", name: "Camp Field 1", type: "camping", subType: "field_view", pricePerNight: 200, status: "occupied", amenities: [], description: "Field view camping spot", maxGuests: 2 },
   { id: "CF-02", name: "Camp Field 2", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
   { id: "CF-03", name: "Camp Field 3", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
   { id: "CF-04", name: "Camp Field 4", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
   { id: "CF-05", name: "Camp Field 5", type: "camping", subType: "field_view", pricePerNight: 200, status: "reserved", amenities: [], description: "Field view camping spot", maxGuests: 2 },
-  // Camping - River View
   { id: "CR-01", name: "Camp River 1", type: "camping", subType: "river_view", pricePerNight: 200, status: "occupied", amenities: [], description: "River view camping spot", maxGuests: 2 },
   { id: "CR-02", name: "Camp River 2", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
   { id: "CR-03", name: "Camp River 3", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
@@ -39,100 +50,140 @@ export const rooms: Room[] = [
 ];
 
 // ============================================================
+// GUEST PROFILES (CRM)
+// ============================================================
+export const guestProfiles: GuestProfile[] = [
+  {
+    id: "G-001", name: "Somchai Kaewkla", phone: "081-234-5678",
+    nationality: "Thai", visitCount: 7, totalSpend: 14_200,
+    membershipTier: "gold", lastVisit: "2026-04-03", firstVisit: "2024-11-15",
+    notes: "Prefers Tree House. Brings own coffee. Likes quiet corner.", preferredRoom: "TH-01",
+    createdAt: "2024-11-15T09:00:00Z",
+  },
+  {
+    id: "G-002", name: "Anna Schmidt", phone: "089-876-5432", email: "anna@email.com",
+    nationality: "German", visitCount: 3, totalSpend: 6_800,
+    membershipTier: "silver", lastVisit: "2026-04-02", firstVisit: "2025-06-20",
+    notes: "Vegetarian. Allergic to shellfish. Usually stays 2-3 nights.",
+    createdAt: "2025-06-20T14:00:00Z",
+  },
+  {
+    id: "G-003", name: "Tanaka Yuki", phone: "092-111-2222",
+    nationality: "Japanese", visitCount: 2, totalSpend: 3_900,
+    membershipTier: "silver", lastVisit: "2026-04-03", firstVisit: "2025-12-28",
+    notes: "Enjoys Terrarium Workshop. Books kayak trip every visit.",
+    createdAt: "2025-12-28T10:00:00Z",
+  },
+  {
+    id: "G-004", name: "Lisa Manobal", phone: "095-333-4444",
+    nationality: "Thai", visitCount: 1, totalSpend: 1_876,
+    membershipTier: "standard", lastVisit: "2026-04-01", firstVisit: "2026-04-01",
+    notes: "Late check-out requested.",
+    createdAt: "2026-04-01T16:00:00Z",
+  },
+  {
+    id: "G-005", name: "Mike Johnson", phone: "088-555-6666",
+    nationality: "American", visitCount: 1, totalSpend: 400,
+    membershipTier: "standard", lastVisit: "2026-04-03", firstVisit: "2026-04-03",
+    createdAt: "2026-04-03T18:00:00Z",
+  },
+  {
+    id: "G-006", name: "Ploy Chaiwan", phone: "086-777-8888",
+    nationality: "Thai", visitCount: 5, totalSpend: 9_450,
+    membershipTier: "gold", lastVisit: "2026-04-02", firstVisit: "2025-01-10",
+    notes: "Loves Moo Jum set. Usually brings 1-2 friends. Prefers river-view.",
+    preferredRoom: "CR-01",
+    createdAt: "2025-01-10T11:00:00Z",
+  },
+  {
+    id: "G-007", name: "David Park", phone: "091-999-0000",
+    nationality: "Korean", visitCount: 2, totalSpend: 3_552,
+    membershipTier: "silver", lastVisit: "2026-04-06", firstVisit: "2025-09-05",
+    notes: "Works remotely. Stays longer on weekdays.",
+    createdAt: "2025-09-05T08:00:00Z",
+  },
+  {
+    id: "G-008", name: "Sarah Lee", phone: "083-111-0000",
+    nationality: "Thai", visitCount: 1, totalSpend: 200,
+    membershipTier: "standard", lastVisit: "2026-04-05", firstVisit: "2026-04-04",
+    createdAt: "2026-04-04T07:00:00Z",
+  },
+  {
+    id: "G-009", name: "Wanchai Boonrod", phone: "084-222-3333",
+    nationality: "Thai", visitCount: 12, totalSpend: 28_600,
+    membershipTier: "gold", lastVisit: "2026-03-28", firstVisit: "2023-08-01",
+    notes: "VIP regular. Birthday in July. Prefers TH-02 or TH-03. No spicy food.",
+    preferredRoom: "TH-02",
+    createdAt: "2023-08-01T09:00:00Z",
+  },
+  {
+    id: "G-010", name: "Priya Sharma", phone: "090-444-5555", email: "priya@gmail.com",
+    nationality: "Indian", visitCount: 2, totalSpend: 4_100,
+    membershipTier: "silver", lastVisit: "2026-02-14", firstVisit: "2025-11-20",
+    notes: "Vegetarian strictly. Loves Canvas Painting activity.",
+    createdAt: "2025-11-20T12:00:00Z",
+  },
+];
+
+// ============================================================
 // BOOKINGS
 // ============================================================
 export const bookings: Booking[] = [
   {
-    id: "BK-001",
-    roomId: "TH-01",
+    id: "BK-001", roomId: "TH-01",
     guest: { id: "G-001", name: "Somchai Kaewkla", phone: "081-234-5678" },
-    checkIn: "2026-04-03",
-    checkOut: "2026-04-05",
-    status: "checked_in",
+    checkIn: "2026-04-03", checkOut: "2026-04-05", status: "checked_in",
     addOns: [{ id: "AO-1", name: "Breakfast", price: 100, quantity: 2 }],
-    totalAmount: 1776,
-    createdAt: "2026-04-01T10:00:00Z",
+    totalAmount: 1776, createdAt: "2026-04-01T10:00:00Z",
   },
   {
-    id: "BK-002",
-    roomId: "RF-01",
+    id: "BK-002", roomId: "RF-01",
     guest: { id: "G-002", name: "Anna Schmidt", phone: "089-876-5432", email: "anna@email.com" },
-    checkIn: "2026-04-02",
-    checkOut: "2026-04-04",
-    status: "checked_in",
+    checkIn: "2026-04-02", checkOut: "2026-04-04", status: "checked_in",
     addOns: [
       { id: "AO-2", name: "Breakfast", price: 100, quantity: 2 },
       { id: "AO-3", name: "Moo Kratha Evening", price: 350, quantity: 2 },
     ],
-    totalAmount: 2076,
-    createdAt: "2026-03-28T14:00:00Z",
+    totalAmount: 2076, createdAt: "2026-03-28T14:00:00Z",
   },
   {
-    id: "BK-003",
-    roomId: "RF-02",
+    id: "BK-003", roomId: "RF-02",
     guest: { id: "G-003", name: "Tanaka Yuki", phone: "092-111-2222" },
-    checkIn: "2026-04-03",
-    checkOut: "2026-04-06",
-    status: "checked_in",
-    addOns: [],
-    totalAmount: 1764,
-    createdAt: "2026-04-01T09:00:00Z",
+    checkIn: "2026-04-03", checkOut: "2026-04-06", status: "checked_in",
+    addOns: [], totalAmount: 1764, createdAt: "2026-04-01T09:00:00Z",
   },
   {
-    id: "BK-004",
-    roomId: "TE-01",
+    id: "BK-004", roomId: "TE-01",
     guest: { id: "G-004", name: "Lisa Manobal", phone: "095-333-4444" },
-    checkIn: "2026-04-01",
-    checkOut: "2026-04-03",
-    status: "checked_in",
+    checkIn: "2026-04-01", checkOut: "2026-04-03", status: "checked_in",
     addOns: [{ id: "AO-4", name: "Breakfast", price: 100, quantity: 1 }],
-    totalAmount: 1876,
-    notes: "Late check-out requested",
-    createdAt: "2026-03-25T16:00:00Z",
+    totalAmount: 1876, notes: "Late check-out requested", createdAt: "2026-03-25T16:00:00Z",
   },
   {
-    id: "BK-005",
-    roomId: "CF-01",
+    id: "BK-005", roomId: "CF-01",
     guest: { id: "G-005", name: "Mike Johnson", phone: "088-555-6666" },
-    checkIn: "2026-04-03",
-    checkOut: "2026-04-05",
-    status: "checked_in",
-    addOns: [],
-    totalAmount: 400,
-    createdAt: "2026-04-02T18:00:00Z",
+    checkIn: "2026-04-03", checkOut: "2026-04-05", status: "checked_in",
+    addOns: [], totalAmount: 400, createdAt: "2026-04-02T18:00:00Z",
   },
   {
-    id: "BK-006",
-    roomId: "CR-01",
+    id: "BK-006", roomId: "CR-01",
     guest: { id: "G-006", name: "Ploy Chaiwan", phone: "086-777-8888" },
-    checkIn: "2026-04-02",
-    checkOut: "2026-04-04",
-    status: "checked_in",
+    checkIn: "2026-04-02", checkOut: "2026-04-04", status: "checked_in",
     addOns: [{ id: "AO-5", name: "Moo Jum Evening", price: 300, quantity: 2 }],
-    totalAmount: 1000,
-    createdAt: "2026-04-01T11:00:00Z",
+    totalAmount: 1000, createdAt: "2026-04-01T11:00:00Z",
   },
   {
-    id: "BK-007",
-    roomId: "TH-03",
+    id: "BK-007", roomId: "TH-03",
     guest: { id: "G-007", name: "David Park", phone: "091-999-0000" },
-    checkIn: "2026-04-04",
-    checkOut: "2026-04-06",
-    status: "confirmed",
+    checkIn: "2026-04-04", checkOut: "2026-04-06", status: "confirmed",
     addOns: [{ id: "AO-6", name: "Breakfast", price: 100, quantity: 2 }],
-    totalAmount: 1776,
-    createdAt: "2026-04-02T08:00:00Z",
+    totalAmount: 1776, createdAt: "2026-04-02T08:00:00Z",
   },
   {
-    id: "BK-008",
-    roomId: "CF-05",
+    id: "BK-008", roomId: "CF-05",
     guest: { id: "G-008", name: "Sarah Lee", phone: "083-111-0000" },
-    checkIn: "2026-04-04",
-    checkOut: "2026-04-05",
-    status: "confirmed",
-    addOns: [],
-    totalAmount: 200,
-    createdAt: "2026-04-03T07:00:00Z",
+    checkIn: "2026-04-04", checkOut: "2026-04-05", status: "confirmed",
+    addOns: [], totalAmount: 200, createdAt: "2026-04-03T07:00:00Z",
   },
 ];
 
@@ -140,7 +191,6 @@ export const bookings: Booking[] = [
 // F&B MENU
 // ============================================================
 export const menuItems: MenuItem[] = [
-  // Coffee & Tea
   { id: "M-01", name: "Espresso", category: "coffee", price: 60, available: true },
   { id: "M-02", name: "Americano", category: "coffee", price: 65, available: true },
   { id: "M-03", name: "Café Latte", category: "coffee", price: 75, available: true },
@@ -149,13 +199,11 @@ export const menuItems: MenuItem[] = [
   { id: "M-06", name: "Thai Milk Tea", category: "tea", price: 55, available: true },
   { id: "M-07", name: "Jasmine Green Tea", category: "tea", price: 50, available: true },
   { id: "M-08", name: "Butterfly Pea Latte", category: "tea", price: 70, available: true },
-  // Cocktails (17:00-22:00)
   { id: "M-09", name: "Mojito", category: "cocktail", price: 220, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-06" },
   { id: "M-10", name: "Margarita", category: "cocktail", price: 240, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-07" },
   { id: "M-11", name: "Negroni", category: "cocktail", price: 250, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-08" },
   { id: "M-12", name: "Old Fashioned", category: "cocktail", price: 260, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-09" },
   { id: "M-13", name: "Jungle Sunset", category: "cocktail", price: 280, available: true, description: "Signature", availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-06" },
-  // Food
   { id: "M-14", name: "Khao Soi Gai", category: "food", price: 120, available: true, description: "Northern curry noodle soup" },
   { id: "M-15", name: "Pad Thai", category: "food", price: 100, available: true },
   { id: "M-16", name: "Som Tam", category: "food", price: 80, available: true, description: "Papaya salad" },
@@ -166,50 +214,35 @@ export const menuItems: MenuItem[] = [
   { id: "M-21", name: "Grilled River Fish", category: "food", price: 180, available: true },
   { id: "M-22", name: "Sticky Rice", category: "food", price: 20, available: true },
   { id: "M-23", name: "Steamed Rice", category: "food", price: 20, available: true },
-  // Specials
   { id: "M-24", name: "Moo Kratha Set (2 pax)", category: "special", price: 350, available: true, description: "Thai BBQ grill set", availableFrom: "17:00", availableTo: "21:00", inventoryItemId: "INV-01" },
   { id: "M-25", name: "Moo Jum Set (2 pax)", category: "special", price: 300, available: true, description: "Thai hot pot set", availableFrom: "17:00", availableTo: "21:00", inventoryItemId: "INV-02" },
 ];
 
 // ============================================================
-// ORDERS (Open Bills)
+// ORDERS
 // ============================================================
 export const orders: Order[] = [
   {
-    id: "ORD-001",
-    roomId: "TH-01",
-    roomName: "Tree House 1",
+    id: "ORD-001", roomId: "TH-01", roomName: "Tree House 1",
     items: [
       { menuItemId: "M-03", name: "Café Latte", price: 75, quantity: 2 },
       { menuItemId: "M-16", name: "Som Tam", price: 80, quantity: 1 },
     ],
-    status: "open",
-    total: 230,
-    createdAt: "2026-04-03T08:30:00Z",
+    status: "open", total: 230, createdAt: "2026-04-03T08:30:00Z",
   },
   {
-    id: "ORD-002",
-    roomId: "RF-01",
-    roomName: "Rice Field 1",
+    id: "ORD-002", roomId: "RF-01", roomName: "Rice Field 1",
     items: [
       { menuItemId: "M-02", name: "Americano", price: 65, quantity: 1 },
       { menuItemId: "M-14", name: "Khao Soi Gai", price: 120, quantity: 2 },
       { menuItemId: "M-22", name: "Sticky Rice", price: 20, quantity: 2 },
     ],
-    status: "open",
-    total: 345,
-    createdAt: "2026-04-03T09:15:00Z",
+    status: "open", total: 345, createdAt: "2026-04-03T09:15:00Z",
   },
   {
-    id: "ORD-003",
-    roomId: "TE-01",
-    roomName: "Tent House 1",
-    items: [
-      { menuItemId: "M-05", name: "Iced Mocha", price: 85, quantity: 1 },
-    ],
-    status: "open",
-    total: 85,
-    createdAt: "2026-04-03T10:00:00Z",
+    id: "ORD-003", roomId: "TE-01", roomName: "Tent House 1",
+    items: [{ menuItemId: "M-05", name: "Iced Mocha", price: 85, quantity: 1 }],
+    status: "open", total: 85, createdAt: "2026-04-03T10:00:00Z",
   },
   {
     id: "ORD-004",
@@ -217,22 +250,16 @@ export const orders: Order[] = [
       { menuItemId: "M-01", name: "Espresso", price: 60, quantity: 1 },
       { menuItemId: "M-15", name: "Pad Thai", price: 100, quantity: 1 },
     ],
-    status: "closed",
-    total: 160,
+    status: "closed", total: 160,
     payment: { method: "promptpay", refNo: "20260403-0800-PP", paidAt: "2026-04-03T08:00:00Z" },
-    createdAt: "2026-04-03T07:45:00Z",
-    closedAt: "2026-04-03T08:00:00Z",
+    createdAt: "2026-04-03T07:45:00Z", closedAt: "2026-04-03T08:00:00Z",
   },
   {
     id: "ORD-005",
-    items: [
-      { menuItemId: "M-04", name: "Cappuccino", price: 75, quantity: 2 },
-    ],
-    status: "paid",
-    total: 150,
+    items: [{ menuItemId: "M-04", name: "Cappuccino", price: 75, quantity: 2 }],
+    status: "paid", total: 150,
     payment: { method: "cash", paidAt: "2026-04-03T09:30:00Z" },
-    createdAt: "2026-04-03T09:20:00Z",
-    closedAt: "2026-04-03T09:30:00Z",
+    createdAt: "2026-04-03T09:20:00Z", closedAt: "2026-04-03T09:30:00Z",
   },
   {
     id: "ORD-006",
@@ -240,11 +267,9 @@ export const orders: Order[] = [
       { menuItemId: "M-09", name: "Mojito", price: 220, quantity: 2 },
       { menuItemId: "M-11", name: "Negroni", price: 250, quantity: 1 },
     ],
-    status: "paid",
-    total: 690,
+    status: "paid", total: 690,
     payment: { method: "promptpay", refNo: "20260402-1830-PP", paidAt: "2026-04-02T18:30:00Z" },
-    createdAt: "2026-04-02T18:00:00Z",
-    closedAt: "2026-04-02T18:30:00Z",
+    createdAt: "2026-04-02T18:00:00Z", closedAt: "2026-04-02T18:30:00Z",
   },
   {
     id: "ORD-007",
@@ -252,11 +277,9 @@ export const orders: Order[] = [
       { menuItemId: "M-24", name: "Moo Kratha Set (2 pax)", price: 350, quantity: 1 },
       { menuItemId: "M-06", name: "Thai Milk Tea", price: 55, quantity: 2 },
     ],
-    status: "paid",
-    total: 460,
+    status: "paid", total: 460,
     payment: { method: "credit_card", paidAt: "2026-04-02T19:00:00Z" },
-    createdAt: "2026-04-02T17:30:00Z",
-    closedAt: "2026-04-02T19:00:00Z",
+    createdAt: "2026-04-02T17:30:00Z", closedAt: "2026-04-02T19:00:00Z",
   },
 ];
 
@@ -300,6 +323,102 @@ export const inventoryItems: InventoryItem[] = [
   { id: "INV-16", name: "Canvas & Paint Kit", category: "consumable", unit: "kits", currentStock: 12, minThreshold: 5, costPerUnit: 120, lastRestocked: "2026-03-30" },
   { id: "INV-17", name: "Charcoal (5kg)", category: "food_supply", unit: "bags", currentStock: 3, minThreshold: 5, costPerUnit: 75, lastRestocked: "2026-04-01" },
   { id: "INV-18", name: "Sticky Rice (5kg)", category: "food_supply", unit: "bags", currentStock: 5, minThreshold: 3, costPerUnit: 95, lastRestocked: "2026-04-02" },
+];
+
+// ============================================================
+// WITHDRAWAL LOGS
+// ============================================================
+export const withdrawalLogs: WithdrawalLog[] = [
+  { id: "WD-001", inventoryItemId: "INV-01", inventoryItemName: "Moo Kratha Set", quantity: 2, unit: "sets", reason: "Evening BBQ — TH-01 & RF-01", requestedBy: "Staff Nook", timestamp: "2026-04-02T17:00:00Z" },
+  { id: "WD-002", inventoryItemId: "INV-06", inventoryItemName: "White Rum (750ml)", quantity: 1, unit: "bottles", reason: "Used in cafe bar service", requestedBy: "Staff Nook", timestamp: "2026-04-02T18:00:00Z" },
+  { id: "WD-003", inventoryItemId: "INV-03", inventoryItemName: "Coffee Beans (1kg)", quantity: 1, unit: "bags", reason: "Daily cafe opening", requestedBy: "Staff Nook", timestamp: "2026-04-03T07:00:00Z" },
+];
+
+// ============================================================
+// HOUSEKEEPING
+// ============================================================
+export const housekeepingRooms: HousekeepingRoom[] = [
+  { roomId: "TH-01", roomName: "Tree House 1",  roomType: "tree_house", housekeepingStatus: "dirty",     lastUpdated: "2026-04-03T10:00:00Z", assignedTo: "Noi" },
+  { roomId: "TH-02", roomName: "Tree House 2",  roomType: "tree_house", housekeepingStatus: "ready",     lastUpdated: "2026-04-03T09:30:00Z", assignedTo: "Noi" },
+  { roomId: "TH-03", roomName: "Tree House 3",  roomType: "tree_house", housekeepingStatus: "cleaning",  lastUpdated: "2026-04-03T10:15:00Z", assignedTo: "Malee" },
+  { roomId: "RF-01", roomName: "Rice Field 1",  roomType: "rice_field", housekeepingStatus: "dirty",     lastUpdated: "2026-04-03T09:00:00Z" },
+  { roomId: "RF-02", roomName: "Rice Field 2",  roomType: "rice_field", housekeepingStatus: "inspected", lastUpdated: "2026-04-03T09:45:00Z", assignedTo: "Malee" },
+  { roomId: "RF-03", roomName: "Rice Field 3",  roomType: "rice_field", housekeepingStatus: "ready",     lastUpdated: "2026-04-03T08:00:00Z" },
+  { roomId: "TE-01", roomName: "Tent House 1",  roomType: "tent_house", housekeepingStatus: "cleaning",  lastUpdated: "2026-04-03T10:30:00Z", assignedTo: "Noi" },
+  { roomId: "TE-02", roomName: "Tent House 2",  roomType: "tent_house", housekeepingStatus: "ready",     lastUpdated: "2026-04-03T08:30:00Z" },
+  { roomId: "CF-01", roomName: "Camp Field 1",  roomType: "camping",    housekeepingStatus: "dirty",     lastUpdated: "2026-04-03T09:00:00Z" },
+  { roomId: "CF-02", roomName: "Camp Field 2",  roomType: "camping",    housekeepingStatus: "ready",     lastUpdated: "2026-04-03T07:30:00Z" },
+  { roomId: "CF-03", roomName: "Camp Field 3",  roomType: "camping",    housekeepingStatus: "ready",     lastUpdated: "2026-04-03T07:30:00Z" },
+  { roomId: "CF-04", roomName: "Camp Field 4",  roomType: "camping",    housekeepingStatus: "inspected", lastUpdated: "2026-04-03T09:50:00Z", assignedTo: "Malee" },
+  { roomId: "CF-05", roomName: "Camp Field 5",  roomType: "camping",    housekeepingStatus: "dirty",     lastUpdated: "2026-04-03T09:00:00Z" },
+  { roomId: "CR-01", roomName: "Camp River 1",  roomType: "camping",    housekeepingStatus: "cleaning",  lastUpdated: "2026-04-03T10:20:00Z", assignedTo: "Noi" },
+  { roomId: "CR-02", roomName: "Camp River 2",  roomType: "camping",    housekeepingStatus: "ready",     lastUpdated: "2026-04-03T08:00:00Z" },
+  { roomId: "CR-03", roomName: "Camp River 3",  roomType: "camping",    housekeepingStatus: "ready",     lastUpdated: "2026-04-03T08:00:00Z" },
+  { roomId: "CR-04", roomName: "Camp River 4",  roomType: "camping",    housekeepingStatus: "ready",     lastUpdated: "2026-04-03T08:00:00Z" },
+  { roomId: "CR-05", roomName: "Camp River 5",  roomType: "camping",    housekeepingStatus: "ready",     lastUpdated: "2026-04-03T08:00:00Z" },
+];
+
+// Default restock checklist items — links to INV consumables.
+// Add 4 housekeeping-specific inventory items (appended to main inventory on the page).
+export const hkInventoryAddons: InventoryItem[] = [
+  { id: "INV-19", name: "Water Bottle (600ml)", category: "consumable", unit: "bottles", currentStock: 80, minThreshold: 20, costPerUnit: 8,  lastRestocked: "2026-04-03" },
+  { id: "INV-20", name: "Soap Bar",             category: "consumable", unit: "bars",    currentStock: 60, minThreshold: 15, costPerUnit: 15, lastRestocked: "2026-04-03" },
+  { id: "INV-21", name: "Shampoo Sachet",       category: "consumable", unit: "sachets", currentStock: 55, minThreshold: 15, costPerUnit: 10, lastRestocked: "2026-04-03" },
+  { id: "INV-22", name: "Toilet Paper Roll",    category: "consumable", unit: "rolls",   currentStock: 100, minThreshold: 30, costPerUnit: 12, lastRestocked: "2026-04-03" },
+  { id: "INV-23", name: "Hand Towel",           category: "consumable", unit: "pcs",     currentStock: 40, minThreshold: 10, costPerUnit: 45, lastRestocked: "2026-04-02" },
+];
+
+export const defaultRestockChecklist: Omit<RestockItem, "checked">[] = [
+  { inventoryItemId: "INV-19", name: "Water Bottle (600ml)", quantity: 2, unit: "bottles" },
+  { inventoryItemId: "INV-20", name: "Soap Bar",             quantity: 1, unit: "bars" },
+  { inventoryItemId: "INV-21", name: "Shampoo Sachet",       quantity: 1, unit: "sachets" },
+  { inventoryItemId: "INV-22", name: "Toilet Paper Roll",    quantity: 2, unit: "rolls" },
+  { inventoryItemId: "INV-23", name: "Hand Towel",           quantity: 2, unit: "pcs" },
+];
+
+export const restockLogs: RestockLog[] = [
+  {
+    id: "RS-001", roomId: "TH-02", roomName: "Tree House 2",
+    items: [
+      { inventoryItemId: "INV-19", name: "Water Bottle (600ml)", quantity: 2, unit: "bottles" },
+      { inventoryItemId: "INV-20", name: "Soap Bar", quantity: 1, unit: "bars" },
+    ],
+    completedBy: "Noi", timestamp: "2026-04-03T09:30:00Z",
+  },
+];
+
+// ============================================================
+// MENU SUB-CATEGORIES
+// ============================================================
+export const menuSubCategories: MenuSubCategory[] = [
+  { id: "SC-01", name: "Hot Coffee",    parentCategory: "coffee" },
+  { id: "SC-02", name: "Iced Coffee",   parentCategory: "coffee" },
+  { id: "SC-03", name: "Herbal Tea",    parentCategory: "tea" },
+  { id: "SC-04", name: "Milk Tea",      parentCategory: "tea" },
+  { id: "SC-05", name: "Mocktail",      parentCategory: "cocktail" },
+  { id: "SC-06", name: "Classic",       parentCategory: "cocktail" },
+  { id: "SC-07", name: "Signature",     parentCategory: "cocktail" },
+  { id: "SC-08", name: "Main Course",   parentCategory: "food" },
+  { id: "SC-09", name: "Snack",         parentCategory: "food" },
+  { id: "SC-10", name: "Sides",         parentCategory: "food" },
+  { id: "SC-11", name: "BBQ Set",       parentCategory: "special" },
+  { id: "SC-12", name: "Hot Pot Set",   parentCategory: "special" },
+];
+
+// ============================================================
+// TOP F&B SALES (for Reports page)
+// ============================================================
+export const topFnbSales: TopSalesItem[] = [
+  { menuItemId: "M-03", name: "Café Latte",           category: "coffee",   qtySold: 145, revenue: 10_875 },
+  { menuItemId: "M-14", name: "Khao Soi Gai",         category: "food",     qtySold: 112, revenue: 13_440 },
+  { menuItemId: "M-15", name: "Pad Thai",             category: "food",     qtySold: 98,  revenue:  9_800 },
+  { menuItemId: "M-05", name: "Iced Mocha",           category: "coffee",   qtySold: 94,  revenue:  7_990 },
+  { menuItemId: "M-24", name: "Moo Kratha Set",       category: "special",  qtySold: 88,  revenue: 30_800 },
+  { menuItemId: "M-09", name: "Mojito",               category: "cocktail", qtySold: 76,  revenue: 16_720 },
+  { menuItemId: "M-06", name: "Thai Milk Tea",        category: "tea",      qtySold: 71,  revenue:  3_905 },
+  { menuItemId: "M-18", name: "Gaeng Hang Lay",       category: "food",     qtySold: 65,  revenue:  8_450 },
+  { menuItemId: "M-13", name: "Jungle Sunset",        category: "cocktail", qtySold: 62,  revenue: 17_360 },
+  { menuItemId: "M-16", name: "Som Tam",              category: "food",     qtySold: 58,  revenue:  4_640 },
 ];
 
 // ============================================================

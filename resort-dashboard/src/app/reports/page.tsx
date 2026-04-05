@@ -13,10 +13,22 @@ import {
   Coffee,
   Wine,
   TreePine,
+  Award,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { exportReportToExcel, buildMockReportRows } from "@/lib/export";
+import { topFnbSales } from "@/lib/mock-data";
+import type { MenuMainCategory } from "@/lib/types";
 
 type DateRange = "today" | "week" | "month" | "custom";
+
+const categoryConfig: Record<MenuMainCategory, { label: string; bg: string; text: string; bar: string }> = {
+  coffee:  { label: "Coffee & Tea", bg: "bg-wood-100",   text: "text-wood-700",   bar: "bg-wood-500"   },
+  tea:     { label: "Tea",          bg: "bg-amber-100",  text: "text-amber-700",  bar: "bg-amber-500"  },
+  cocktail:{ label: "Cocktail",     bg: "bg-purple-100", text: "text-purple-700", bar: "bg-purple-500" },
+  food:    { label: "Food",         bg: "bg-orange-100", text: "text-orange-700", bar: "bg-orange-500" },
+  special: { label: "Special",      bg: "bg-sage-100",   text: "text-sage-700",   bar: "bg-sage-500"   },
+};
 
 // Mock report data — in production this would come from API aggregation
 const reportData = {
@@ -91,18 +103,14 @@ export default function ReportsPage() {
   ];
 
   const handleExport = () => {
-    const header = "Category,Amount (THB),Transactions,Share (%)";
-    const rows = revenueRows.map(
-      (r) => `"${r.label}",${r.amount},${r.txns},${((r.amount / data.totalRevenue) * 100).toFixed(1)}`
-    );
-    const csv = [header, ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `resort-report-${range}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const rangeLabels: Record<DateRange, string> = {
+      today: "today",
+      week: "week",
+      month: "month",
+      custom: `${customFrom}-to-${customTo}`,
+    };
+    const rows = buildMockReportRows(range);
+    exportReportToExcel(rows, rangeLabels[range]);
   };
 
   return (
@@ -302,6 +310,94 @@ export default function ReportsPage() {
                 PromptPay accounts for {((data.payments.promptpay.amount / data.totalRevenue) * 100).toFixed(0)}% of all payments
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top F&B Sales */}
+      <div className="rounded-xl border border-sage-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-sage-100 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-amber-100 p-2">
+              <Award size={18} className="text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-charcoal-700">{t("rpt.topSales")}</h2>
+              <p className="text-xs text-charcoal-400">{t("rpt.topSalesSubtitle")}</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700">
+            Top {topFnbSales.length}
+          </span>
+        </div>
+
+        <div className="divide-y divide-sage-50">
+          {topFnbSales.map((item, idx) => {
+            const cfg = categoryConfig[item.category];
+            const maxQty = topFnbSales[0].qtySold;
+            const barWidth = Math.round((item.qtySold / maxQty) * 100);
+            const isTop3 = idx < 3;
+            const medalColors = ["text-amber-500", "text-charcoal-400", "text-wood-600"];
+
+            return (
+              <div key={item.menuItemId} className="flex items-center gap-4 px-5 py-3.5 hover:bg-sage-50/50 transition-colors">
+                {/* Rank */}
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                  isTop3 ? "bg-amber-50 " + medalColors[idx] : "bg-charcoal-50 text-charcoal-400"
+                }`}>
+                  {isTop3 ? (idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉") : idx + 1}
+                </div>
+
+                {/* Name + Category */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className={`truncate text-sm font-semibold text-charcoal-800 ${isTop3 ? "" : ""}`}>
+                      {item.name}
+                    </p>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+                      {cfg.label}
+                    </span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 rounded-full bg-sage-100">
+                      <div
+                        className={`h-1.5 rounded-full transition-all ${cfg.bar}`}
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-bold text-charcoal-800">
+                    {item.qtySold.toLocaleString()}
+                    <span className="ml-1 text-xs font-normal text-charcoal-400">{t("rpt.qtySold")}</span>
+                  </p>
+                  <p className="text-xs text-charcoal-400">฿{item.revenue.toLocaleString()}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer summary */}
+        <div className="border-t border-sage-100 bg-sage-50/50 px-5 py-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-charcoal-400">
+            <span>
+              Total units sold:{" "}
+              <span className="font-semibold text-charcoal-700">
+                {topFnbSales.reduce((s, i) => s + i.qtySold, 0).toLocaleString()}
+              </span>
+            </span>
+            <span>
+              Total F&B revenue:{" "}
+              <span className="font-semibold text-charcoal-700">
+                ฿{topFnbSales.reduce((s, i) => s + i.revenue, 0).toLocaleString()}
+              </span>
+            </span>
+            <span className="ml-auto text-sage-500">Based on all-time mock data</span>
           </div>
         </div>
       </div>
