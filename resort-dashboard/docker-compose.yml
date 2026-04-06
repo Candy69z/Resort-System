@@ -1,0 +1,55 @@
+# =============================================================
+# Resort Dashboard — Docker Compose
+#
+# Quick start:
+#   docker compose up --build       # first run (builds image)
+#   docker compose up -d            # subsequent runs (detached)
+#   docker compose down             # stop & remove containers
+#   docker compose logs -f          # tail live logs
+#
+# ── Supabase / environment variables ─────────────────────────
+# If you need to connect to Supabase (or any external service),
+# create a file named  .env.local  in this directory with your
+# keys, for example:
+#
+#   NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+#   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+#
+# Then uncomment the `env_file` line below.
+# NEVER commit .env.local to version control.
+# =============================================================
+
+services:
+  resort-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Pass build-time args here if your Next.js config needs them,
+      # e.g. for NEXT_PUBLIC_* variables that are baked in at build time.
+      # args:
+      #   NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+    image: resort-dashboard:latest
+    container_name: resort-dashboard
+    ports:
+      - "3000:3000"
+    # Uncomment to inject runtime environment variables from .env.local:
+    # env_file:
+    #   - .env.local
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    restart: always
+    # Optional: resource limits to prevent runaway memory usage
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512m
+    #       cpus: "0.5"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

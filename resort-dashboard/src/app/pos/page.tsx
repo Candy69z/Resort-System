@@ -6,6 +6,7 @@ import {
   Wine,
   UtensilsCrossed,
   Flame,
+  Tag,
   Plus,
   Minus,
   X,
@@ -18,22 +19,51 @@ import {
   ChevronDown,
   Check,
 } from "lucide-react";
-import { menuItems, rooms, orders as initialOrders, inventoryItems as initialInventory } from "@/lib/mock-data";
-import type { Order, OrderItem, MenuItem, InventoryItem, PaymentMethod } from "@/lib/types";
+import {
+  rooms,
+  orders as initialOrders,
+  inventoryItems as initialInventory,
+} from "@/lib/mock-data";
+import type {
+  Order,
+  OrderItem,
+  MenuItem,
+  InventoryItem,
+  PaymentMethod,
+  MenuMainCategoryDef,
+} from "@/lib/types";
 import PaymentForm from "@/components/PaymentForm";
 import { useI18n } from "@/lib/i18n";
+import { useMockData } from "@/lib/mock-data-context";
 
-// ── Category config ────────────────────────────────────────
-const categoryConfig = {
-  coffee:   { label: "Coffee",   icon: Coffee,         color: "bg-wood-100 text-wood-700 border-wood-200",      activeColor: "bg-wood-600 text-white border-wood-600" },
-  tea:      { label: "Tea",      icon: Coffee,         color: "bg-sage-100 text-sage-700 border-sage-200",       activeColor: "bg-sage-600 text-white border-sage-600" },
-  cocktail: { label: "Cocktails",icon: Wine,           color: "bg-purple-50 text-purple-700 border-purple-200",  activeColor: "bg-purple-700 text-white border-purple-700" },
-  food:     { label: "Food",     icon: UtensilsCrossed,color: "bg-amber-50 text-amber-700 border-amber-200",     activeColor: "bg-amber-600 text-white border-amber-600" },
-  special:  { label: "Specials", icon: Flame,          color: "bg-red-50 text-red-700 border-red-200",          activeColor: "bg-red-600 text-white border-red-600" },
+// ── Icon map for well-known category ids ───────────────────────
+const CAT_ICON_MAP: Record<string, React.ElementType> = {
+  coffee:   Coffee,
+  tea:      Coffee,
+  cocktail: Wine,
+  food:     UtensilsCrossed,
+  special:  Flame,
 };
-type Category = keyof typeof categoryConfig;
+function getCatIcon(id: string): React.ElementType {
+  return CAT_ICON_MAP[id] ?? Tag;
+}
 
-// ── Item Note Modal ────────────────────────────────────────
+// ── Active-color map (inactive badge → filled active button) ──
+const ACTIVE_COLOR_MAP: Record<string, string> = {
+  "bg-wood-100 text-wood-700 border-wood-200":              "bg-wood-600 text-white border-wood-600",
+  "bg-sage-100 text-sage-700 border-sage-200":              "bg-sage-600 text-white border-sage-600",
+  "bg-purple-50 text-purple-700 border-purple-200":         "bg-purple-700 text-white border-purple-700",
+  "bg-amber-50 text-amber-700 border-amber-200":            "bg-amber-600 text-white border-amber-600",
+  "bg-red-50 text-red-700 border-red-200":                  "bg-red-600 text-white border-red-600",
+  "bg-blue-50 text-blue-700 border-blue-200":               "bg-blue-600 text-white border-blue-600",
+  "bg-emerald-50 text-emerald-700 border-emerald-200":      "bg-emerald-600 text-white border-emerald-600",
+  "bg-charcoal-100 text-charcoal-600 border-charcoal-200":  "bg-charcoal-600 text-white border-charcoal-600",
+};
+function getActiveColor(color: string): string {
+  return ACTIVE_COLOR_MAP[color] ?? "bg-sage-600 text-white border-sage-600";
+}
+
+// ── Item Note Modal ────────────────────────────────────────────
 function ItemNoteModal({
   item,
   currentNote,
@@ -78,33 +108,23 @@ function ItemNoteModal({
             rows={2}
             className="w-full rounded-lg border border-sage-200 bg-sage-50 px-3.5 py-2.5 text-sm text-charcoal-800 outline-none resize-none focus:border-sage-500 focus:ring-2 focus:ring-sage-200"
           />
-          {/* Quick-tap notes */}
           <div className="flex flex-wrap gap-1.5">
             {quickNotes.map((qn) => (
-              <button
-                key={qn}
-                onClick={() => setNote(qn)}
+              <button key={qn} onClick={() => setNote(qn)}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium border transition ${
-                  note === qn
-                    ? "bg-sage-600 text-white border-sage-600"
-                    : "border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
-                }`}
-              >
+                  note === qn ? "bg-sage-600 text-white border-sage-600" : "border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                }`}>
                 {qn}
               </button>
             ))}
           </div>
           <div className="flex gap-3 pt-1">
-            <button
-              onClick={() => { onSave(""); onClose(); }}
-              className="flex-1 rounded-xl border border-sage-200 py-3 text-sm font-medium text-charcoal-500 hover:bg-sage-50"
-            >
+            <button onClick={() => { onSave(""); onClose(); }}
+              className="flex-1 rounded-xl border border-sage-200 py-3 text-sm font-medium text-charcoal-500 hover:bg-sage-50">
               Clear
             </button>
-            <button
-              onClick={() => { onSave(note); onClose(); }}
-              className="flex-1 rounded-xl bg-sage-700 py-3 text-sm font-semibold text-white hover:bg-sage-600"
-            >
+            <button onClick={() => { onSave(note); onClose(); }}
+              className="flex-1 rounded-xl bg-sage-700 py-3 text-sm font-semibold text-white hover:bg-sage-600">
               {t("common.confirm")}
             </button>
           </div>
@@ -114,18 +134,11 @@ function ItemNoteModal({
   );
 }
 
-// ── Split Bill Modal ───────────────────────────────────────
-function SplitBillModal({
-  total,
-  onClose,
-}: {
-  total: number;
-  onClose: () => void;
-}) {
+// ── Split Bill Modal ───────────────────────────────────────────
+function SplitBillModal({ total, onClose }: { total: number; onClose: () => void }) {
   const { t } = useI18n();
   const [ways, setWays] = useState(2);
   const perPerson = Math.ceil(total / ways);
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center p-0 sm:p-4">
       <div className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl">
@@ -135,60 +148,40 @@ function SplitBillModal({
             <SplitSquareHorizontal size={17} />
             {t("pos.splitBill")}
           </h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-charcoal-400 hover:bg-sage-50">
-            <X size={18} />
-          </button>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-charcoal-400 hover:bg-sage-50"><X size={18} /></button>
         </div>
         <div className="px-5 py-5 space-y-5">
           <div className="text-center">
             <p className="text-sm text-charcoal-400">{t("common.total")}</p>
             <p className="text-3xl font-bold text-charcoal-800">฿{total.toLocaleString()}</p>
           </div>
-
-          {/* Ways selector */}
           <div>
             <label className="mb-2 block text-sm font-medium text-charcoal-700">{t("pos.splitBy")}</label>
             <div className="flex gap-2">
               {[2, 3, 4, 5, 6].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setWays(n)}
+                <button key={n} onClick={() => setWays(n)}
                   className={`flex-1 rounded-xl py-3 text-sm font-bold transition ${
-                    ways === n
-                      ? "bg-sage-700 text-white"
-                      : "border border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
-                  }`}
-                >
+                    ways === n ? "bg-sage-700 text-white" : "border border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                  }`}>
                   {n}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Per-person breakdown */}
           <div className="rounded-xl bg-sage-50 p-4 space-y-2">
             {Array.from({ length: ways }).map((_, i) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-charcoal-500">Person {i + 1}</span>
                 <span className="font-semibold text-charcoal-800">
-                  ฿{i === ways - 1
-                    ? (total - perPerson * (ways - 1)).toLocaleString()
-                    : perPerson.toLocaleString()}
+                  ฿{(i === ways - 1 ? total - perPerson * (ways - 1) : perPerson).toLocaleString()}
                 </span>
               </div>
             ))}
           </div>
-
-          <p className="text-center text-xs text-charcoal-400">
-            ≈ ฿{perPerson.toLocaleString()} {t("pos.perPerson")}
-          </p>
-
-          <button
-            onClick={onClose}
-            className="w-full rounded-xl bg-sage-700 py-3.5 text-sm font-semibold text-white hover:bg-sage-600"
-          >
-            <Check size={15} className="inline mr-1.5" />
-            Done
+          <p className="text-center text-xs text-charcoal-400">≈ ฿{perPerson.toLocaleString()} {t("pos.perPerson")}</p>
+          <button onClick={onClose}
+            className="w-full rounded-xl bg-sage-700 py-3.5 text-sm font-semibold text-white hover:bg-sage-600">
+            <Check size={15} className="inline mr-1.5" />Done
           </button>
         </div>
       </div>
@@ -196,51 +189,79 @@ function SplitBillModal({
   );
 }
 
-// ── Main POS Page ──────────────────────────────────────────
+// ── Main POS Page ──────────────────────────────────────────────
 export default function POSPage() {
-  const { t } = useI18n();
-  const [orderList, setOrderList] = useState<Order[]>(initialOrders);
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
-  const [activeCategory, setActiveCategory] = useState<Category>("coffee");
-  const [cart, setCart] = useState<OrderItem[]>([]);
+  const { t, locale } = useI18n();
+
+  // ── Global shared data (stays in sync with Admin edits) ──
+  const {
+    menuItems,
+    menuMainCategories: mainCats,
+    menuSubCategories:  subCats,
+  } = useMockData();
+
+  // ── State ──
+  const [orderList, setOrderList]       = useState<Order[]>(initialOrders);
+  const [inventory, setInventory]       = useState<InventoryItem[]>(initialInventory);
+  const [activeCategory, setActiveCategory]   = useState<string>(mainCats[0]?.id ?? "coffee");
+  const [activeSubCat, setActiveSubCat]       = useState<string | null>(null);
+  const [cart, setCart]                 = useState<OrderItem[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [showOpenBills, setShowOpenBills] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
+  const [showPayment, setShowPayment]   = useState(false);
   const [settlingOrder, setSettlingOrder] = useState<Order | null>(null);
-  const [noteModal, setNoteModal] = useState<OrderItem | null>(null);
+  const [noteModal, setNoteModal]       = useState<OrderItem | null>(null);
   const [showSplitBill, setShowSplitBill] = useState(false);
 
-  const occupiedRooms = rooms.filter((r) => r.status === "occupied");
-  const openOrders = orderList.filter((o) => o.status === "open");
-  const filteredMenu = menuItems.filter((m) => m.category === activeCategory && m.available);
+  // ── Derived data ──
+  const occupiedRooms   = rooms.filter((r) => r.status === "occupied");
+  const openOrders      = orderList.filter((o) => o.status === "open");
+
+  // Sub-categories for the active main category
+  const activeSubs = subCats.filter((s) => s.parentCategory === activeCategory);
+
+  // Menu filtered by main category + sub-category
+  const filteredMenu = menuItems.filter((m) => {
+    if (!m.available || m.category !== activeCategory) return false;
+    if (activeSubCat && m.subCategory !== activeSubCat) return false;
+    return true;
+  });
+
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // ── Helpers to get localised name ──
+  function itemDisplayName(item: MenuItem): string {
+    return locale === "th" ? (item.nameTh || item.name) : (item.nameEn || item.name);
+  }
+
+  // ── Cart operations ──
   const addToCart = (item: MenuItem) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.menuItemId === item.id);
       if (existing) {
-        return prev.map((c) =>
-          c.menuItemId === item.id ? { ...c, quantity: c.quantity + 1 } : c
-        );
+        return prev.map((c) => c.menuItemId === item.id ? { ...c, quantity: c.quantity + 1 } : c);
       }
-      return [...prev, { menuItemId: item.id, name: item.name, price: item.price, quantity: 1 }];
+      return [...prev, {
+        menuItemId: item.id,
+        name:       itemDisplayName(item),
+        price:      item.price,
+        quantity:   1,
+      }];
     });
   };
 
   const updateCartQty = (menuItemId: string, delta: number) => {
     setCart((prev) =>
-      prev
-        .map((c) => c.menuItemId === menuItemId ? { ...c, quantity: c.quantity + delta } : c)
-        .filter((c) => c.quantity > 0)
+      prev.map((c) => c.menuItemId === menuItemId ? { ...c, quantity: c.quantity + delta } : c)
+          .filter((c) => c.quantity > 0)
     );
   };
 
   const updateCartNote = (menuItemId: string, note: string) => {
-    setCart((prev) =>
-      prev.map((c) => c.menuItemId === menuItemId ? { ...c, note } : c)
-    );
+    setCart((prev) => prev.map((c) => c.menuItemId === menuItemId ? { ...c, note } : c));
   };
 
+  // ── Inventory deduction ──
   const deductInventory = (items: OrderItem[]) => {
     setInventory((prev) => {
       const updated = [...prev];
@@ -249,10 +270,7 @@ export default function POSPage() {
         if (menuItem?.inventoryItemId) {
           const invIdx = updated.findIndex((i) => i.id === menuItem.inventoryItemId);
           if (invIdx >= 0) {
-            updated[invIdx] = {
-              ...updated[invIdx],
-              currentStock: Math.max(0, updated[invIdx].currentStock - cartItem.quantity),
-            };
+            updated[invIdx] = { ...updated[invIdx], currentStock: Math.max(0, updated[invIdx].currentStock - cartItem.quantity) };
           }
         }
       }
@@ -260,6 +278,7 @@ export default function POSPage() {
     });
   };
 
+  // ── Order actions ──
   const handlePlaceOrder = () => {
     if (cart.length === 0) return;
     if (!selectedRoom) { setShowPayment(true); return; }
@@ -283,11 +302,11 @@ export default function POSPage() {
     } else {
       const newOrder: Order = {
         id: `ORD-${String(orderList.length + 1).padStart(3, "0")}`,
-        roomId: selectedRoom,
-        roomName: room?.name,
-        items: [...cart],
-        status: "open",
-        total: cartTotal,
+        roomId:    selectedRoom,
+        roomName:  room?.name,
+        items:     [...cart],
+        status:    "open",
+        total:     cartTotal,
         createdAt: new Date().toISOString(),
       };
       setOrderList([...orderList, newOrder]);
@@ -300,12 +319,9 @@ export default function POSPage() {
   const handleWalkinPayment = (method: PaymentMethod, refNo?: string, slipFile?: string) => {
     const newOrder: Order = {
       id: `ORD-${String(orderList.length + 1).padStart(3, "0")}`,
-      items: [...cart],
-      status: "paid",
-      total: cartTotal,
+      items: [...cart], status: "paid", total: cartTotal,
       payment: { method, refNo, slipImageUrl: slipFile, paidAt: new Date().toISOString() },
-      createdAt: new Date().toISOString(),
-      closedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(), closedAt: new Date().toISOString(),
     };
     setOrderList([...orderList, newOrder]);
     deductInventory(cart);
@@ -334,6 +350,12 @@ export default function POSPage() {
       return inv && inv.currentStock <= inv.minThreshold ? inv : null;
     })
     .filter(Boolean) as InventoryItem[];
+
+  // ── Change category and reset sub-cat ──
+  function handleCategoryChange(catId: string) {
+    setActiveCategory(catId);
+    setActiveSubCat(null);
+  }
 
   return (
     <div className="space-y-5">
@@ -373,10 +395,8 @@ export default function POSPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-charcoal-700">฿{o.total.toLocaleString()}</span>
-                  <button
-                    onClick={() => setSettlingOrder(o)}
-                    className="rounded-lg bg-wood-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-wood-700"
-                  >
+                  <button onClick={() => setSettlingOrder(o)}
+                    className="rounded-lg bg-wood-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-wood-700">
                     {t("common.pay")}
                   </button>
                 </div>
@@ -391,33 +411,73 @@ export default function POSPage() {
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* ── Menu Section (Left 2/3) ── */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Category Tabs — large touch targets */}
+        <div className="lg:col-span-2 space-y-3">
+
+          {/* ── Main Category Tabs (dynamic) ── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:flex-wrap">
-            {(Object.keys(categoryConfig) as Category[]).map((cat) => {
-              const { label, icon: Icon, color, activeColor } = categoryConfig[cat];
-              const isActive = activeCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`shrink-0 inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-all active:scale-95 ${
-                    isActive ? activeColor : color
-                  }`}
-                >
-                  <Icon size={18} />
-                  {label}
-                </button>
-              );
-            })}
+            {[...mainCats]
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((cat) => {
+                const isActive = activeCategory === cat.id;
+                const Icon = getCatIcon(cat.id);
+                const activeColor = getActiveColor(cat.color);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className={`shrink-0 inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-all active:scale-95 ${
+                      isActive ? activeColor : cat.color
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {locale === "th" ? cat.nameTh : cat.nameEn}
+                  </button>
+                );
+              })}
           </div>
 
-          {/* Menu Grid — touch-optimised larger cards */}
+          {/* ── Sub-Category Chip Filter (shows only if subs exist) ── */}
+          {activeSubs.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0">
+              <button
+                onClick={() => setActiveSubCat(null)}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-95 ${
+                  activeSubCat === null
+                    ? "bg-charcoal-700 text-white border-charcoal-700"
+                    : "border-charcoal-200 bg-white text-charcoal-600 hover:bg-charcoal-50"
+                }`}
+              >
+                All
+              </button>
+              {activeSubs.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => setActiveSubCat(activeSubCat === sub.nameEn ? null : sub.nameEn)}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-95 ${
+                    activeSubCat === sub.nameEn
+                      ? "bg-sage-600 text-white border-sage-600"
+                      : "border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                  }`}
+                >
+                  {locale === "th" ? sub.nameTh : sub.nameEn}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Menu Grid ── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {filteredMenu.length === 0 && (
+              <div className="col-span-3 rounded-2xl border border-dashed border-sage-200 py-12 text-center text-sm text-charcoal-300">
+                No items in this category
+              </div>
+            )}
             {filteredMenu.map((item) => {
               const inCart = cart.find((c) => c.menuItemId === item.id);
               const inv = item.inventoryItemId ? inventory.find((i) => i.id === item.inventoryItemId) : null;
               const isLowStock = inv ? inv.currentStock <= inv.minThreshold : false;
+              const displayName = itemDisplayName(item);
+              const subName = locale === "th" ? item.nameTh : item.nameEn;
 
               return (
                 <button
@@ -430,9 +490,13 @@ export default function POSPage() {
                   }`}
                 >
                   <div>
-                    <p className="text-base font-semibold text-charcoal-800 leading-snug">{item.name}</p>
+                    <p className="text-base font-semibold text-charcoal-800 leading-snug">{displayName}</p>
+                    {/* Secondary language label */}
+                    {subName !== displayName && (
+                      <p className="text-xs text-charcoal-400">{subName}</p>
+                    )}
                     {item.description && (
-                      <p className="mt-0.5 text-xs text-charcoal-400 line-clamp-1">{item.description}</p>
+                      <p className="mt-0.5 text-xs text-charcoal-300 line-clamp-1">{item.description}</p>
                     )}
                   </div>
                   <div className="mt-2">
@@ -487,7 +551,9 @@ export default function POSPage() {
               >
                 <option value="">{t("common.walkin")} — pay now</option>
                 {occupiedRooms.map((r) => (
-                  <option key={r.id} value={r.id}>{r.id} — {r.name}</option>
+                  <option key={r.id} value={r.id}>
+                    {r.id} — {locale === "th" ? r.nameTh : r.nameEn}
+                  </option>
                 ))}
               </select>
               <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
@@ -497,14 +563,13 @@ export default function POSPage() {
             )}
           </div>
 
-          {/* Cart Items — large touch targets */}
+          {/* Cart Items */}
           <div className="flex-1 divide-y divide-sage-100 overflow-y-auto max-h-[55vh]">
             {cart.length === 0 ? (
               <p className="px-5 py-12 text-center text-sm text-charcoal-300">Tap menu items to add</p>
             ) : (
               cart.map((item) => (
                 <div key={item.menuItemId} className="px-4 py-3 space-y-2">
-                  {/* Item name + price */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-charcoal-800 leading-tight">{item.name}</p>
@@ -516,35 +581,20 @@ export default function POSPage() {
                       ฿{(item.price * item.quantity).toLocaleString()}
                     </p>
                   </div>
-
-                  {/* Controls row */}
                   <div className="flex items-center gap-2">
-                    {/* Qty stepper — large */}
-                    <button
-                      onClick={() => updateCartQty(item.menuItemId, -1)}
-                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-sage-100 text-sage-700 font-bold text-lg hover:bg-sage-200 active:scale-90 transition"
-                    >
+                    <button onClick={() => updateCartQty(item.menuItemId, -1)}
+                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-sage-100 text-sage-700 font-bold text-lg hover:bg-sage-200 active:scale-90 transition">
                       −
                     </button>
-                    <span className="w-8 text-center text-base font-bold text-charcoal-700">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateCartQty(item.menuItemId, 1)}
-                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-sage-600 text-white font-bold text-lg hover:bg-sage-700 active:scale-90 transition"
-                    >
+                    <span className="w-8 text-center text-base font-bold text-charcoal-700">{item.quantity}</span>
+                    <button onClick={() => updateCartQty(item.menuItemId, 1)}
+                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-sage-600 text-white font-bold text-lg hover:bg-sage-700 active:scale-90 transition">
                       +
                     </button>
-
-                    {/* Add Note */}
-                    <button
-                      onClick={() => setNoteModal(item)}
+                    <button onClick={() => setNoteModal(item)}
                       className={`ml-auto flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-medium transition ${
-                        item.note
-                          ? "border-sage-400 bg-sage-50 text-sage-700"
-                          : "border-charcoal-200 text-charcoal-400 hover:bg-sage-50"
-                      }`}
-                    >
+                        item.note ? "border-sage-400 bg-sage-50 text-sage-700" : "border-charcoal-200 text-charcoal-400 hover:bg-sage-50"
+                      }`}>
                       <MessageSquare size={13} />
                       {item.note ? "Edit" : t("pos.addNote")}
                     </button>
@@ -573,29 +623,19 @@ export default function POSPage() {
                 <span className="text-charcoal-700">{t("common.total")}</span>
                 <span className="text-sage-700">฿{cartTotal.toLocaleString()}</span>
               </div>
-
-              {/* Split Bill */}
-              <button
-                onClick={() => setShowSplitBill(true)}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-sage-200 py-2.5 text-sm font-medium text-charcoal-600 hover:bg-sage-50 transition"
-              >
+              <button onClick={() => setShowSplitBill(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-sage-200 py-2.5 text-sm font-medium text-charcoal-600 hover:bg-sage-50 transition">
                 <SplitSquareHorizontal size={15} />
                 {t("pos.splitBill")}
               </button>
-
-              <button
-                onClick={handlePlaceOrder}
-                className="w-full rounded-xl bg-sage-600 py-4 text-base font-bold text-white shadow-sm transition hover:bg-sage-700 active:scale-[0.98]"
-              >
+              <button onClick={handlePlaceOrder}
+                className="w-full rounded-xl bg-sage-600 py-4 text-base font-bold text-white shadow-sm transition hover:bg-sage-700 active:scale-[0.98]">
                 {selectedRoom
-                  ? `Add to ${rooms.find((r) => r.id === selectedRoom)?.name}`
+                  ? `Add to ${rooms.find((r) => r.id === selectedRoom)?.[locale === "th" ? "nameTh" : "nameEn"] ?? ""}`
                   : `${t("common.pay")} ฿${cartTotal.toLocaleString()}`}
               </button>
-
-              <button
-                onClick={() => setCart([])}
-                className="w-full rounded-xl border border-sage-200 py-2.5 text-sm font-medium text-charcoal-500 hover:bg-sage-50"
-              >
+              <button onClick={() => setCart([])}
+                className="w-full rounded-xl border border-sage-200 py-2.5 text-sm font-medium text-charcoal-500 hover:bg-sage-50">
                 Clear Cart
               </button>
             </div>
@@ -663,10 +703,7 @@ export default function POSPage() {
 
       {/* Split Bill Modal */}
       {showSplitBill && (
-        <SplitBillModal
-          total={cartTotal}
-          onClose={() => setShowSplitBill(false)}
-        />
+        <SplitBillModal total={cartTotal} onClose={() => setShowSplitBill(false)} />
       )}
     </div>
   );

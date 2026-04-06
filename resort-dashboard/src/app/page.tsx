@@ -14,9 +14,10 @@ import {
   Minus,
   X,
   ChevronDown,
+  Flame,
 } from "lucide-react";
 import { useState } from "react";
-import { dailyStats, bookings, orders, rooms, inventoryItems as seedItems, withdrawalLogs as seedLogs } from "@/lib/mock-data";
+import { dailyStats, bookings, orders, rooms, inventoryItems as seedItems, withdrawalLogs as seedLogs, topFnbSales, menuMainCategories } from "@/lib/mock-data";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import type { InventoryItem, WithdrawalLog } from "@/lib/types";
@@ -379,6 +380,60 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Top 3 Trending Items */}
+      {(() => {
+        const top3 = topFnbSales.slice(0, 3);
+        const maxQty = top3[0]?.qtySold ?? 1;
+        const medals = ["🥇", "🥈", "🥉"];
+        return (
+          <div className="rounded-xl border border-sage-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-sage-100 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-amber-100 p-2">
+                  <Flame size={16} className="text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-charcoal-700">{t("dash.topTrending")}</h2>
+                  <p className="text-xs text-charcoal-400">{t("dash.topTrendingSub")}</p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-charcoal-400">All-time</span>
+            </div>
+            <div className="divide-y divide-sage-50">
+              {top3.map((item, idx) => {
+                const cat = menuMainCategories.find((c) => c.id === item.category);
+                const barWidth = Math.round((item.qtySold / maxQty) * 100);
+                return (
+                  <div key={item.menuItemId} className="flex items-center gap-4 px-5 py-3">
+                    <span className="text-xl">{medals[idx]}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-charcoal-800 truncate">{item.name}</p>
+                        {cat && (
+                          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${cat.color}`}>
+                            {cat.nameEn}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 h-1.5 w-full rounded-full bg-sage-100">
+                        <div
+                          className="h-1.5 rounded-full bg-amber-400 transition-all"
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-charcoal-800">{item.qtySold.toLocaleString()}</p>
+                      <p className="text-xs text-charcoal-400">{t("dash.soldUnits")}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Room Status Overview */}
       <div className="rounded-xl border border-sage-200 bg-white shadow-sm">

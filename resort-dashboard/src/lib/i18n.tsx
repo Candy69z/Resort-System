@@ -175,11 +175,28 @@ const dictionary: Record<string, Record<Locale, string>> = {
   "rpt.topSalesSubtitle": { en: "Ranked by quantity sold", th: "เรียงตามจำนวนที่ขายได้" },
   "rpt.qtySold": { en: "Qty Sold", th: "จำนวนขาย" },
 
-  // Admin sub-category
-  "admin.categoriesTab": { en: "Categories", th: "หมวดหมู่" },
-  "admin.subCategory": { en: "Sub-Category", th: "หมวดย่อย" },
-  "admin.addSubCategory": { en: "Add Sub-Category", th: "เพิ่มหมวดย่อย" },
-  "admin.mainCategory": { en: "Main Category", th: "หมวดหลัก" },
+  // Admin sub-category & main category management
+  "admin.categoriesTab":    { en: "Categories",         th: "หมวดหมู่" },
+  "admin.subCategory":      { en: "Sub-Category",       th: "หมวดย่อย" },
+  "admin.addSubCategory":   { en: "Add Sub-Category",   th: "เพิ่มหมวดย่อย" },
+  "admin.mainCategory":     { en: "Main Category",      th: "หมวดหลัก" },
+  "admin.addMainCategory":  { en: "Add Main Category",  th: "เพิ่มหมวดหลัก" },
+  "admin.editMainCategory": { en: "Edit Category",      th: "แก้ไขหมวดหลัก" },
+  "admin.nameEn":           { en: "Name (EN)",          th: "ชื่อ (ภาษาอังกฤษ)" },
+  "admin.nameTh":           { en: "Name (TH)",          th: "ชื่อ (ภาษาไทย)" },
+  "admin.colorStyle":       { en: "Color Style",        th: "สีของแท็ก" },
+  "admin.deleteCategory":   { en: "Delete Category",    th: "ลบหมวดหมู่" },
+
+  // Dashboard — Top 3 Trending widget
+  "dash.topTrending":       { en: "Top 3 Trending",     th: "ขายดี 3 อันดับ" },
+  "dash.topTrendingSub":    { en: "Best sellers today", th: "ขายดีที่สุดวันนี้" },
+  "dash.soldUnits":         { en: "sold",               th: "ชิ้น" },
+
+  // Room type translations (for display)
+  "room.tree_house":        { en: "Tree House",         th: "บ้านต้นไม้" },
+  "room.rice_field":        { en: "Rice Field",         th: "บ้านริมนา" },
+  "room.tent_house":        { en: "Tent House",         th: "บ้านเต้นท์" },
+  "room.camping":           { en: "Camping",            th: "ลานกางเต็นท์" },
 };
 
 interface I18nContextType {

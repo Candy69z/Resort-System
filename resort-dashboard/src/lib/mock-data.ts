@@ -3,6 +3,7 @@ import {
   Booking,
   MenuItem,
   MenuSubCategory,
+  MenuMainCategoryDef,
   Order,
   Activity,
   ActivityBooking,
@@ -18,6 +19,17 @@ import {
 } from "./types";
 
 // ============================================================
+// MENU MAIN CATEGORIES (dynamic — admin-managed)
+// ============================================================
+export const menuMainCategories: MenuMainCategoryDef[] = [
+  { id: "coffee",   nameEn: "Coffee",   nameTh: "กาแฟ",         color: "bg-wood-100 text-wood-700 border-wood-200",     sortOrder: 1 },
+  { id: "tea",      nameEn: "Tea",      nameTh: "ชา",           color: "bg-sage-100 text-sage-700 border-sage-200",     sortOrder: 2 },
+  { id: "cocktail", nameEn: "Cocktail", nameTh: "ค็อกเทล",      color: "bg-purple-50 text-purple-700 border-purple-200", sortOrder: 3 },
+  { id: "food",     nameEn: "Food",     nameTh: "อาหาร",        color: "bg-amber-50 text-amber-700 border-amber-200",   sortOrder: 4 },
+  { id: "special",  nameEn: "Special",  nameTh: "พิเศษ",        color: "bg-red-50 text-red-700 border-red-200",         sortOrder: 5 },
+];
+
+// ============================================================
 // AUTH USERS (mock credentials)
 // ============================================================
 export const mockUsers: (AuthUser & { password: string })[] = [
@@ -29,24 +41,24 @@ export const mockUsers: (AuthUser & { password: string })[] = [
 // ROOMS
 // ============================================================
 export const rooms: Room[] = [
-  { id: "TH-01", name: "Tree House 1", type: "tree_house", pricePerNight: 788, status: "occupied", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
-  { id: "TH-02", name: "Tree House 2", type: "tree_house", pricePerNight: 788, status: "available", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
-  { id: "TH-03", name: "Tree House 3", type: "tree_house", pricePerNight: 788, status: "reserved", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
-  { id: "RF-01", name: "Rice Field 1", type: "rice_field", pricePerNight: 588, status: "occupied", amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
-  { id: "RF-02", name: "Rice Field 2", type: "rice_field", pricePerNight: 588, status: "occupied", amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
-  { id: "RF-03", name: "Rice Field 3", type: "rice_field", pricePerNight: 588, status: "cleaning", amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
-  { id: "TE-01", name: "Tent House 1", type: "tent_house", pricePerNight: 888, status: "occupied", amenities: ["Fan", "Water Heater"], description: "Permanent glamping tent", maxGuests: 2 },
-  { id: "TE-02", name: "Tent House 2", type: "tent_house", pricePerNight: 888, status: "available", amenities: ["Fan", "Water Heater"], description: "Permanent glamping tent", maxGuests: 2 },
-  { id: "CF-01", name: "Camp Field 1", type: "camping", subType: "field_view", pricePerNight: 200, status: "occupied", amenities: [], description: "Field view camping spot", maxGuests: 2 },
-  { id: "CF-02", name: "Camp Field 2", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
-  { id: "CF-03", name: "Camp Field 3", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
-  { id: "CF-04", name: "Camp Field 4", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
-  { id: "CF-05", name: "Camp Field 5", type: "camping", subType: "field_view", pricePerNight: 200, status: "reserved", amenities: [], description: "Field view camping spot", maxGuests: 2 },
-  { id: "CR-01", name: "Camp River 1", type: "camping", subType: "river_view", pricePerNight: 200, status: "occupied", amenities: [], description: "River view camping spot", maxGuests: 2 },
-  { id: "CR-02", name: "Camp River 2", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
-  { id: "CR-03", name: "Camp River 3", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
-  { id: "CR-04", name: "Camp River 4", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
-  { id: "CR-05", name: "Camp River 5", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
+  { id: "TH-01", name: "Tree House 1", nameEn: "Tree House 1", nameTh: "บ้านต้นไม้ 1", type: "tree_house", pricePerNight: 788, status: "occupied",  amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
+  { id: "TH-02", name: "Tree House 2", nameEn: "Tree House 2", nameTh: "บ้านต้นไม้ 2", type: "tree_house", pricePerNight: 788, status: "available", amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
+  { id: "TH-03", name: "Tree House 3", nameEn: "Tree House 3", nameTh: "บ้านต้นไม้ 3", type: "tree_house", pricePerNight: 788, status: "reserved",  amenities: ["Fan", "Water Heater", "Balcony"], description: "Nature view, private balcony", maxGuests: 2 },
+  { id: "RF-01", name: "Rice Field 1", nameEn: "Rice Field 1", nameTh: "บ้านริมนา 1",  type: "rice_field", pricePerNight: 588, status: "occupied",  amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
+  { id: "RF-02", name: "Rice Field 2", nameEn: "Rice Field 2", nameTh: "บ้านริมนา 2",  type: "rice_field", pricePerNight: 588, status: "occupied",  amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
+  { id: "RF-03", name: "Rice Field 3", nameEn: "Rice Field 3", nameTh: "บ้านริมนา 3",  type: "rice_field", pricePerNight: 588, status: "cleaning",  amenities: ["Fan", "Water Heater"], description: "Rice field & river view", maxGuests: 2 },
+  { id: "TE-01", name: "Tent House 1", nameEn: "Tent House 1", nameTh: "บ้านเต้นท์ 1", type: "tent_house", pricePerNight: 888, status: "occupied",  amenities: ["Fan", "Water Heater"], description: "Permanent glamping tent", maxGuests: 2 },
+  { id: "TE-02", name: "Tent House 2", nameEn: "Tent House 2", nameTh: "บ้านเต้นท์ 2", type: "tent_house", pricePerNight: 888, status: "available", amenities: ["Fan", "Water Heater"], description: "Permanent glamping tent", maxGuests: 2 },
+  { id: "CF-01", name: "Camp Field 1", nameEn: "Camp Field 1", nameTh: "ลานกางเต็นท์ 1", type: "camping", subType: "field_view", pricePerNight: 200, status: "occupied",  amenities: [], description: "Field view camping spot", maxGuests: 2 },
+  { id: "CF-02", name: "Camp Field 2", nameEn: "Camp Field 2", nameTh: "ลานกางเต็นท์ 2", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
+  { id: "CF-03", name: "Camp Field 3", nameEn: "Camp Field 3", nameTh: "ลานกางเต็นท์ 3", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
+  { id: "CF-04", name: "Camp Field 4", nameEn: "Camp Field 4", nameTh: "ลานกางเต็นท์ 4", type: "camping", subType: "field_view", pricePerNight: 200, status: "available", amenities: [], description: "Field view camping spot", maxGuests: 2 },
+  { id: "CF-05", name: "Camp Field 5", nameEn: "Camp Field 5", nameTh: "ลานกางเต็นท์ 5", type: "camping", subType: "field_view", pricePerNight: 200, status: "reserved",  amenities: [], description: "Field view camping spot", maxGuests: 2 },
+  { id: "CR-01", name: "Camp River 1", nameEn: "Camp River 1", nameTh: "ลานริมน้ำ 1", type: "camping", subType: "river_view", pricePerNight: 200, status: "occupied",  amenities: [], description: "River view camping spot", maxGuests: 2 },
+  { id: "CR-02", name: "Camp River 2", nameEn: "Camp River 2", nameTh: "ลานริมน้ำ 2", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
+  { id: "CR-03", name: "Camp River 3", nameEn: "Camp River 3", nameTh: "ลานริมน้ำ 3", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
+  { id: "CR-04", name: "Camp River 4", nameEn: "Camp River 4", nameTh: "ลานริมน้ำ 4", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
+  { id: "CR-05", name: "Camp River 5", nameEn: "Camp River 5", nameTh: "ลานริมน้ำ 5", type: "camping", subType: "river_view", pricePerNight: 200, status: "available", amenities: [], description: "River view camping spot", maxGuests: 2 },
 ];
 
 // ============================================================
@@ -191,31 +203,36 @@ export const bookings: Booking[] = [
 // F&B MENU
 // ============================================================
 export const menuItems: MenuItem[] = [
-  { id: "M-01", name: "Espresso", category: "coffee", price: 60, available: true },
-  { id: "M-02", name: "Americano", category: "coffee", price: 65, available: true },
-  { id: "M-03", name: "Café Latte", category: "coffee", price: 75, available: true },
-  { id: "M-04", name: "Cappuccino", category: "coffee", price: 75, available: true },
-  { id: "M-05", name: "Iced Mocha", category: "coffee", price: 85, available: true },
-  { id: "M-06", name: "Thai Milk Tea", category: "tea", price: 55, available: true },
-  { id: "M-07", name: "Jasmine Green Tea", category: "tea", price: 50, available: true },
-  { id: "M-08", name: "Butterfly Pea Latte", category: "tea", price: 70, available: true },
-  { id: "M-09", name: "Mojito", category: "cocktail", price: 220, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-06" },
-  { id: "M-10", name: "Margarita", category: "cocktail", price: 240, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-07" },
-  { id: "M-11", name: "Negroni", category: "cocktail", price: 250, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-08" },
-  { id: "M-12", name: "Old Fashioned", category: "cocktail", price: 260, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-09" },
-  { id: "M-13", name: "Jungle Sunset", category: "cocktail", price: 280, available: true, description: "Signature", availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-06" },
-  { id: "M-14", name: "Khao Soi Gai", category: "food", price: 120, available: true, description: "Northern curry noodle soup" },
-  { id: "M-15", name: "Pad Thai", category: "food", price: 100, available: true },
-  { id: "M-16", name: "Som Tam", category: "food", price: 80, available: true, description: "Papaya salad" },
-  { id: "M-17", name: "Nam Prik Ong", category: "food", price: 90, available: true, description: "Northern chili dip set" },
-  { id: "M-18", name: "Gaeng Hang Lay", category: "food", price: 130, available: true, description: "Northern pork curry" },
-  { id: "M-19", name: "Lab Moo", category: "food", price: 95, available: true, description: "Spicy minced pork salad" },
-  { id: "M-20", name: "Jungle Curry", category: "food", price: 140, available: true, description: "Spicy herbal curry" },
-  { id: "M-21", name: "Grilled River Fish", category: "food", price: 180, available: true },
-  { id: "M-22", name: "Sticky Rice", category: "food", price: 20, available: true },
-  { id: "M-23", name: "Steamed Rice", category: "food", price: 20, available: true },
-  { id: "M-24", name: "Moo Kratha Set (2 pax)", category: "special", price: 350, available: true, description: "Thai BBQ grill set", availableFrom: "17:00", availableTo: "21:00", inventoryItemId: "INV-01" },
-  { id: "M-25", name: "Moo Jum Set (2 pax)", category: "special", price: 300, available: true, description: "Thai hot pot set", availableFrom: "17:00", availableTo: "21:00", inventoryItemId: "INV-02" },
+  // Coffee
+  { id: "M-01", name: "Espresso",           nameEn: "Espresso",           nameTh: "เอสเปรสโซ่",       category: "coffee",   subCategory: "Hot Coffee",  price: 60,  available: true },
+  { id: "M-02", name: "Americano",          nameEn: "Americano",          nameTh: "อเมริกาโน่",        category: "coffee",   subCategory: "Hot Coffee",  price: 65,  available: true },
+  { id: "M-03", name: "Café Latte",         nameEn: "Café Latte",         nameTh: "กาแฟลาเต้",         category: "coffee",   subCategory: "Hot Coffee",  price: 75,  available: true },
+  { id: "M-04", name: "Cappuccino",         nameEn: "Cappuccino",         nameTh: "คาปูชิโน่",         category: "coffee",   subCategory: "Hot Coffee",  price: 75,  available: true },
+  { id: "M-05", name: "Iced Mocha",         nameEn: "Iced Mocha",         nameTh: "ไอซ์โมค่า",         category: "coffee",   subCategory: "Iced Coffee", price: 85,  available: true },
+  // Tea
+  { id: "M-06", name: "Thai Milk Tea",      nameEn: "Thai Milk Tea",      nameTh: "ชานมไทย",           category: "tea",      subCategory: "Milk Tea",    price: 55,  available: true },
+  { id: "M-07", name: "Jasmine Green Tea",  nameEn: "Jasmine Green Tea",  nameTh: "ชาเขียวมะลิ",       category: "tea",      subCategory: "Herbal Tea",  price: 50,  available: true },
+  { id: "M-08", name: "Butterfly Pea Latte",nameEn: "Butterfly Pea Latte",nameTh: "ลาเต้ดอกอัญชัน",    category: "tea",      subCategory: "Milk Tea",    price: 70,  available: true },
+  // Cocktails
+  { id: "M-09", name: "Mojito",             nameEn: "Mojito",             nameTh: "โมฮิโต้",           category: "cocktail", subCategory: "Classic",     price: 220, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-06" },
+  { id: "M-10", name: "Margarita",          nameEn: "Margarita",          nameTh: "มาร์การิต้า",       category: "cocktail", subCategory: "Classic",     price: 240, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-07" },
+  { id: "M-11", name: "Negroni",            nameEn: "Negroni",            nameTh: "เนโกรนี",           category: "cocktail", subCategory: "Classic",     price: 250, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-08" },
+  { id: "M-12", name: "Old Fashioned",      nameEn: "Old Fashioned",      nameTh: "โอลด์แฟชั่น",       category: "cocktail", subCategory: "Classic",     price: 260, available: true, availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-09" },
+  { id: "M-13", name: "Jungle Sunset",      nameEn: "Jungle Sunset",      nameTh: "จังเกิ้ลซันเซ็ต",   category: "cocktail", subCategory: "Signature",   price: 280, available: true, description: "Signature", availableFrom: "17:00", availableTo: "22:00", inventoryItemId: "INV-06" },
+  // Food
+  { id: "M-14", name: "Khao Soi Gai",      nameEn: "Khao Soi Gai",      nameTh: "ข้าวซอยไก่",        category: "food",     subCategory: "Main Course", price: 120, available: true, description: "Northern curry noodle soup" },
+  { id: "M-15", name: "Pad Thai",           nameEn: "Pad Thai",           nameTh: "ผัดไทย",            category: "food",     subCategory: "Main Course", price: 100, available: true },
+  { id: "M-16", name: "Som Tam",            nameEn: "Som Tam",            nameTh: "ส้มตำ",              category: "food",     subCategory: "Snack",       price: 80,  available: true, description: "Papaya salad" },
+  { id: "M-17", name: "Nam Prik Ong",       nameEn: "Nam Prik Ong",       nameTh: "น้ำพริกอ่อง",       category: "food",     subCategory: "Snack",       price: 90,  available: true, description: "Northern chili dip set" },
+  { id: "M-18", name: "Gaeng Hang Lay",     nameEn: "Gaeng Hang Lay",     nameTh: "แกงฮังเล",          category: "food",     subCategory: "Main Course", price: 130, available: true, description: "Northern pork curry" },
+  { id: "M-19", name: "Lab Moo",            nameEn: "Lab Moo",            nameTh: "ลาบหมู",             category: "food",     subCategory: "Snack",       price: 95,  available: true, description: "Spicy minced pork salad" },
+  { id: "M-20", name: "Jungle Curry",       nameEn: "Jungle Curry",       nameTh: "แกงป่า",             category: "food",     subCategory: "Main Course", price: 140, available: true, description: "Spicy herbal curry" },
+  { id: "M-21", name: "Grilled River Fish", nameEn: "Grilled River Fish", nameTh: "ปลาย่าง",           category: "food",     subCategory: "Main Course", price: 180, available: true },
+  { id: "M-22", name: "Sticky Rice",        nameEn: "Sticky Rice",        nameTh: "ข้าวเหนียว",         category: "food",     subCategory: "Sides",       price: 20,  available: true },
+  { id: "M-23", name: "Steamed Rice",       nameEn: "Steamed Rice",       nameTh: "ข้าวสวย",            category: "food",     subCategory: "Sides",       price: 20,  available: true },
+  // Special
+  { id: "M-24", name: "Moo Kratha Set (2 pax)", nameEn: "Moo Kratha Set (2 pax)", nameTh: "เซตหมูกระทะ (2 ท่าน)", category: "special", subCategory: "BBQ Set",     price: 350, available: true, description: "Thai BBQ grill set", availableFrom: "17:00", availableTo: "21:00", inventoryItemId: "INV-01" },
+  { id: "M-25", name: "Moo Jum Set (2 pax)",   nameEn: "Moo Jum Set (2 pax)",   nameTh: "เซตหมูจุ่ม (2 ท่าน)",   category: "special", subCategory: "Hot Pot Set", price: 300, available: true, description: "Thai hot pot set",   availableFrom: "17:00", availableTo: "21:00", inventoryItemId: "INV-02" },
 ];
 
 // ============================================================
@@ -391,18 +408,18 @@ export const restockLogs: RestockLog[] = [
 // MENU SUB-CATEGORIES
 // ============================================================
 export const menuSubCategories: MenuSubCategory[] = [
-  { id: "SC-01", name: "Hot Coffee",    parentCategory: "coffee" },
-  { id: "SC-02", name: "Iced Coffee",   parentCategory: "coffee" },
-  { id: "SC-03", name: "Herbal Tea",    parentCategory: "tea" },
-  { id: "SC-04", name: "Milk Tea",      parentCategory: "tea" },
-  { id: "SC-05", name: "Mocktail",      parentCategory: "cocktail" },
-  { id: "SC-06", name: "Classic",       parentCategory: "cocktail" },
-  { id: "SC-07", name: "Signature",     parentCategory: "cocktail" },
-  { id: "SC-08", name: "Main Course",   parentCategory: "food" },
-  { id: "SC-09", name: "Snack",         parentCategory: "food" },
-  { id: "SC-10", name: "Sides",         parentCategory: "food" },
-  { id: "SC-11", name: "BBQ Set",       parentCategory: "special" },
-  { id: "SC-12", name: "Hot Pot Set",   parentCategory: "special" },
+  { id: "SC-01", name: "Hot Coffee",  nameEn: "Hot Coffee",  nameTh: "กาแฟร้อน",       parentCategory: "coffee"   },
+  { id: "SC-02", name: "Iced Coffee", nameEn: "Iced Coffee", nameTh: "กาแฟเย็น",       parentCategory: "coffee"   },
+  { id: "SC-03", name: "Herbal Tea",  nameEn: "Herbal Tea",  nameTh: "ชาสมุนไพร",      parentCategory: "tea"      },
+  { id: "SC-04", name: "Milk Tea",    nameEn: "Milk Tea",    nameTh: "ชานม",            parentCategory: "tea"      },
+  { id: "SC-05", name: "Mocktail",    nameEn: "Mocktail",    nameTh: "น้ำผสม",          parentCategory: "cocktail" },
+  { id: "SC-06", name: "Classic",     nameEn: "Classic",     nameTh: "คลาสสิก",         parentCategory: "cocktail" },
+  { id: "SC-07", name: "Signature",   nameEn: "Signature",   nameTh: "ซิกเนเจอร์",      parentCategory: "cocktail" },
+  { id: "SC-08", name: "Main Course", nameEn: "Main Course", nameTh: "อาหารจานหลัก",   parentCategory: "food"     },
+  { id: "SC-09", name: "Snack",       nameEn: "Snack",       nameTh: "ของทานเล่น",     parentCategory: "food"     },
+  { id: "SC-10", name: "Sides",       nameEn: "Sides",       nameTh: "เครื่องเคียง",    parentCategory: "food"     },
+  { id: "SC-11", name: "BBQ Set",     nameEn: "BBQ Set",     nameTh: "เซตบาร์บีคิว",   parentCategory: "special"  },
+  { id: "SC-12", name: "Hot Pot Set", nameEn: "Hot Pot Set", nameTh: "เซตสุกี้",        parentCategory: "special"  },
 ];
 
 // ============================================================

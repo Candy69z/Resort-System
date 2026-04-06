@@ -13,12 +13,12 @@ import {
   Calendar,
 } from "lucide-react";
 import {
-  activities,
   activityBookings as initialBookings,
   rooms,
   bookings as guestBookings,
 } from "@/lib/mock-data";
 import type { ActivityBooking, Activity } from "@/lib/types";
+import { useMockData } from "@/lib/mock-data-context";
 
 const categoryIcons = {
   workshop: Paintbrush,
@@ -33,6 +33,9 @@ const categoryColors = {
 };
 
 export default function ActivitiesPage() {
+  // ── Global shared data (stays in sync with Admin edits) ──
+  const { activities } = useMockData();
+
   const [actBookings, setActBookings] = useState<ActivityBooking[]>(initialBookings);
   const [showForm, setShowForm] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);

@@ -11,7 +11,10 @@ export type PaymentMethod = "cash" | "credit_card" | "promptpay";
 export type UserRole = "admin" | "staff";
 export type MembershipTier = "standard" | "silver" | "gold";
 export type HousekeepingStatus = "dirty" | "cleaning" | "inspected" | "ready";
-export type MenuMainCategory = "coffee" | "tea" | "cocktail" | "food" | "special";
+
+// MenuMainCategory is now a free string (category id) to allow dynamic creation.
+// Well-known built-in ids: "coffee" | "tea" | "cocktail" | "food" | "special"
+export type MenuMainCategory = string;
 
 // ---------- Auth ----------
 export interface AuthUser {
@@ -22,10 +25,21 @@ export interface AuthUser {
   avatarInitials: string;
 }
 
+// ---------- Main Category Definition (dynamic, admin-managed) ----------
+export interface MenuMainCategoryDef {
+  id: string;             // e.g. "coffee", "food", "event_menu"
+  nameEn: string;         // e.g. "Coffee"
+  nameTh: string;         // e.g. "กาแฟ"
+  color: string;          // Tailwind class string for badge/button styling
+  sortOrder: number;      // display order in POS tabs
+}
+
 // ---------- Room ----------
 export interface Room {
   id: string;
-  name: string;
+  name: string;           // legacy display name (kept for backward compatibility)
+  nameEn: string;         // e.g. "Tree House 1"
+  nameTh: string;         // e.g. "บ้านต้นไม้ 1"
   type: "tree_house" | "rice_field" | "tent_house" | "camping";
   subType?: "field_view" | "river_view";
   pricePerNight: number;
@@ -86,9 +100,11 @@ export interface AddOn {
 // ---------- F&B Menu ----------
 export interface MenuItem {
   id: string;
-  name: string;
+  name: string;           // legacy / fallback display name
+  nameEn: string;         // e.g. "Café Latte"
+  nameTh: string;         // e.g. "กาแฟลาเต้"
   category: MenuMainCategory;
-  subCategory?: string;          // e.g. "snack", "main_course", "mocktail"
+  subCategory?: string;   // sub-category id/name
   price: number;
   available: boolean;
   description?: string;
@@ -100,7 +116,9 @@ export interface MenuItem {
 // ---------- F&B Sub-Category ----------
 export interface MenuSubCategory {
   id: string;
-  name: string;
+  name: string;           // legacy / fallback
+  nameEn: string;         // e.g. "Hot Coffee"
+  nameTh: string;         // e.g. "กาแฟร้อน"
   parentCategory: MenuMainCategory;
 }
 
@@ -110,7 +128,7 @@ export interface OrderItem {
   name: string;
   price: number;
   quantity: number;
-  note?: string;                 // e.g. "หวานน้อย / Less Sweet"
+  note?: string;          // e.g. "หวานน้อย / Less Sweet"
 }
 
 export interface Order {
@@ -169,9 +187,9 @@ export interface WithdrawalLog {
   inventoryItemName: string;
   quantity: number;
   unit: string;
-  reason: string;           // e.g. "Used in cafe", "Requested by TH-01"
-  requestedBy: string;      // staff name / user ID
-  timestamp: string;        // ISO datetime
+  reason: string;
+  requestedBy: string;
+  timestamp: string;
 }
 
 // ---------- Report Row (Excel export) ----------
@@ -192,7 +210,7 @@ export interface HousekeepingRoom {
   roomName: string;
   roomType: Room["type"];
   housekeepingStatus: HousekeepingStatus;
-  lastUpdated: string;           // ISO datetime
+  lastUpdated: string;
   assignedTo?: string;
   notes?: string;
 }

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/lib/auth";
+import { MockDataProvider } from "@/lib/mock-data-context";
 import DashboardShell from "@/components/DashboardShell";
 
 const geistSans = Geist({
@@ -33,7 +34,9 @@ export default function RootLayout({
       <body className="flex h-full min-h-screen">
         <I18nProvider>
           <AuthProvider>
-            <DashboardShell>{children}</DashboardShell>
+            <MockDataProvider>
+              <DashboardShell>{children}</DashboardShell>
+            </MockDataProvider>
           </AuthProvider>
         </I18nProvider>
       </body>
