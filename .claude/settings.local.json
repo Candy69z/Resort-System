@@ -4,7 +4,8 @@
       "Bash(npx create-next-app@latest resort-dashboard --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Bash(node -e \"const xlsx = require\\(''xlsx''\\); console.log\\(xlsx.version\\);\")"
+      "Bash(node -e \"const xlsx = require\\(''xlsx''\\); console.log\\(xlsx.version\\);\")",
+      "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)"
     ]
   }
 }
