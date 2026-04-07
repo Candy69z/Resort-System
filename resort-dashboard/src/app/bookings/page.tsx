@@ -9,11 +9,35 @@ import {
   LogIn,
   LogOut,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { rooms, bookings as initialBookings, orders, guestProfiles } from "@/lib/mock-data";
 import type { Booking, RoomStatus, PaymentMethod, MembershipTier } from "@/lib/types";
 import PaymentForm from "@/components/PaymentForm";
 import { useI18n } from "@/lib/i18n";
+import { updateRoomHkStatus, updateRoomStatus } from "@/lib/db";
+
+// ── Constants ──────────────────────────────────────────────────
+const DAY_W = 60; // px per day column in Gantt
+const GANTT_DAYS = 14;
+
+// ── Helpers ────────────────────────────────────────────────────
+function addDays(date: Date, n: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function toYMD(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function diffDays(a: string, b: string): number {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+}
+
+// ── Sub-components ─────────────────────────────────────────────
 
 const statusColors: Record<RoomStatus, string> = {
   available: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -27,6 +51,13 @@ const bookingStatusColors: Record<string, string> = {
   checked_in: "bg-sage-100 text-sage-700",
   checked_out: "bg-charcoal-100 text-charcoal-500",
   cancelled: "bg-red-50 text-red-600",
+};
+
+const ganttColors: Record<string, string> = {
+  confirmed: "bg-amber-400",
+  checked_in: "bg-sage-500",
+  checked_out: "bg-charcoal-300",
+  cancelled: "bg-red-300",
 };
 
 function Badge({ status, map }: { status: string; map: Record<string, string> }) {
@@ -51,13 +82,204 @@ function MemberBadge({ tier }: { tier: MembershipTier }) {
   );
 }
 
+// ── Gantt Calendar ─────────────────────────────────────────────
+
+function GanttCalendar({
+  bookingList,
+  ganttStart,
+  onPrev,
+  onNext,
+  onToday,
+}: {
+  bookingList: Booking[];
+  ganttStart: Date;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+}) {
+  const { t } = useI18n();
+  const today = toYMD(new Date());
+
+  // Build date headers
+  const dates: Date[] = Array.from({ length: GANTT_DAYS }, (_, i) => addDays(ganttStart, i));
+  const startStr = toYMD(ganttStart);
+  const endStr = toYMD(addDays(ganttStart, GANTT_DAYS - 1));
+
+  // Filter rooms that have any bookings in the window (show all rooms)
+  const roomTypes = ["tree_house", "rice_field", "tent_house", "camping"] as const;
+  const typeLabels: Record<string, string> = {
+    tree_house: "Tree Houses",
+    rice_field: "Rice Field Rooms",
+    tent_house: "Tent Houses",
+    camping: "Camping Spots",
+  };
+
+  function getBookingsForRoom(roomId: string): Booking[] {
+    return bookingList.filter((b) => {
+      if (b.roomId !== roomId) return false;
+      if (b.status === "cancelled") return false;
+      // Overlaps with the visible window
+      return b.checkIn <= endStr && b.checkOut >= startStr;
+    });
+  }
+
+  function calcBlock(b: Booking) {
+    const startOffset = Math.max(0, diffDays(startStr, b.checkIn));
+    const endOffset = Math.min(GANTT_DAYS, diffDays(startStr, b.checkOut));
+    const left = startOffset * DAY_W;
+    const width = Math.max(DAY_W * 0.5, (endOffset - startOffset) * DAY_W - 4);
+    return { left, width };
+  }
+
+  return (
+    <div className="rounded-xl border border-sage-200 bg-white shadow-sm overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between border-b border-sage-100 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <button onClick={onPrev} className="rounded-lg border border-sage-200 p-1.5 hover:bg-sage-50">
+            <ChevronLeft size={16} />
+          </button>
+          <button onClick={onNext} className="rounded-lg border border-sage-200 p-1.5 hover:bg-sage-50">
+            <ChevronRight size={16} />
+          </button>
+          <button onClick={onToday} className="rounded-lg border border-sage-200 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:bg-sage-50">
+            {t("fd.today")}
+          </button>
+        </div>
+        <p className="text-sm font-medium text-charcoal-600">
+          {ganttStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+          {" — "}
+          {addDays(ganttStart, GANTT_DAYS - 1).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+        </p>
+        {/* Legend */}
+        <div className="flex items-center gap-3 text-xs text-charcoal-500">
+          <span className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm bg-amber-400" /> Confirmed</span>
+          <span className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm bg-sage-500" /> Checked In</span>
+          <span className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm bg-charcoal-300" /> Checked Out</span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div style={{ minWidth: `${200 + GANTT_DAYS * DAY_W}px` }}>
+          {/* Date header */}
+          <div className="flex border-b border-sage-100">
+            <div className="w-[200px] shrink-0 border-r border-sage-100 px-4 py-2 text-xs font-semibold text-charcoal-400 uppercase tracking-wide">
+              Room
+            </div>
+            {dates.map((d) => {
+              const ymd = toYMD(d);
+              const isToday = ymd === today;
+              return (
+                <div
+                  key={ymd}
+                  style={{ width: DAY_W }}
+                  className={`shrink-0 border-r border-sage-100 py-2 text-center text-xs font-medium ${
+                    isToday ? "bg-sage-100 text-sage-700 font-bold" : "text-charcoal-400"
+                  }`}
+                >
+                  <div>{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
+                  <div className={isToday ? "text-sage-600 font-extrabold" : ""}>
+                    {d.getDate()}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Room rows grouped by type */}
+          {roomTypes.map((type) => {
+            const typeRooms = rooms.filter((r) => r.type === type);
+            if (typeRooms.length === 0) return null;
+            return (
+              <div key={type}>
+                {/* Type group header */}
+                <div className="flex bg-sage-50/60 border-b border-sage-100">
+                  <div className="w-[200px] shrink-0 border-r border-sage-100 px-4 py-1.5">
+                    <span className="text-xs font-semibold text-charcoal-500">{typeLabels[type]}</span>
+                  </div>
+                  <div style={{ width: GANTT_DAYS * DAY_W }} />
+                </div>
+                {/* Individual room rows */}
+                {typeRooms.map((room) => {
+                  const roomBookings = getBookingsForRoom(room.id);
+                  return (
+                    <div key={room.id} className="flex border-b border-sage-100 hover:bg-sage-50/30">
+                      {/* Room label */}
+                      <div className="w-[200px] shrink-0 border-r border-sage-100 px-4 py-2.5">
+                        <p className="text-sm font-semibold text-charcoal-700">{room.id}</p>
+                        <p className="text-xs text-charcoal-400 truncate">{room.nameEn}</p>
+                      </div>
+                      {/* Timeline */}
+                      <div
+                        className="relative flex-1"
+                        style={{ height: 52, width: GANTT_DAYS * DAY_W }}
+                      >
+                        {/* Today line */}
+                        {today >= startStr && today <= endStr && (
+                          <div
+                            className="absolute top-0 bottom-0 w-px bg-sage-400 z-10 opacity-60"
+                            style={{ left: diffDays(startStr, today) * DAY_W + DAY_W / 2 }}
+                          />
+                        )}
+                        {/* Day column backgrounds */}
+                        {dates.map((d) => {
+                          const ymd = toYMD(d);
+                          return (
+                            <div
+                              key={ymd}
+                              style={{ left: dates.indexOf(d) * DAY_W, width: DAY_W }}
+                              className={`absolute top-0 bottom-0 border-r border-sage-100 ${
+                                ymd === today ? "bg-sage-50/50" : ""
+                              }`}
+                            />
+                          );
+                        })}
+                        {/* Booking blocks */}
+                        {roomBookings.map((b) => {
+                          const { left, width } = calcBlock(b);
+                          const color = ganttColors[b.status] ?? "bg-sage-400";
+                          return (
+                            <div
+                              key={b.id}
+                              style={{ left: left + 2, width, top: 8, height: 36 }}
+                              className={`absolute rounded-md ${color} px-2 flex items-center overflow-hidden cursor-default z-20 shadow-sm`}
+                              title={`${b.guest.name} (${b.checkIn} → ${b.checkOut})`}
+                            >
+                              <span className="text-xs font-semibold text-white truncate leading-tight">
+                                {b.guest.name}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────
+
 export default function BookingsPage() {
   const { t } = useI18n();
   const [bookingList, setBookingList] = useState<Booking[]>(initialBookings);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState<"rooms" | "bookings">("rooms");
+  const [view, setView] = useState<"rooms" | "bookings" | "calendar">("rooms");
   const [checkoutModal, setCheckoutModal] = useState<Booking | null>(null);
+
+  // Gantt window: start 2 days before today so checked-in guests are visible
+  const [ganttStart, setGanttStart] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 2);
+    return d;
+  });
 
   // New booking form state
   const [formRoom, setFormRoom] = useState("");
@@ -140,6 +362,9 @@ export default function BookingsPage() {
 
   const handleCheckoutPayment = (method: PaymentMethod, refNo?: string, slipFile?: string) => {
     if (!checkoutModal) return;
+    const roomId = checkoutModal.roomId;
+
+    // Update booking status locally
     setBookingList((prev) =>
       prev.map((b) =>
         b.id === checkoutModal.id
@@ -156,6 +381,11 @@ export default function BookingsPage() {
           : b
       )
     );
+
+    // Set room to "cleaning" + housekeeping to "dirty" in Supabase (fire-and-forget)
+    void updateRoomStatus(roomId, "cleaning");
+    void updateRoomHkStatus(roomId, "dirty");
+
     setCheckoutModal(null);
   };
 
@@ -181,13 +411,19 @@ export default function BookingsPage() {
           onClick={() => setView("rooms")}
           className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${view === "rooms" ? "bg-sage-600 text-white" : "bg-white text-charcoal-600 border border-sage-200 hover:bg-sage-50"}`}
         >
-          <BedDouble size={16} /> Room Status
+          <BedDouble size={16} /> {t("fd.roomsView")}
         </button>
         <button
           onClick={() => setView("bookings")}
           className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${view === "bookings" ? "bg-sage-600 text-white" : "bg-white text-charcoal-600 border border-sage-200 hover:bg-sage-50"}`}
         >
-          <Calendar size={16} /> Booking List
+          <Search size={16} /> {t("fd.bookingsView")}
+        </button>
+        <button
+          onClick={() => setView("calendar")}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${view === "calendar" ? "bg-sage-600 text-white" : "bg-white text-charcoal-600 border border-sage-200 hover:bg-sage-50"}`}
+        >
+          <Calendar size={16} /> {t("fd.calendarView")}
         </button>
       </div>
 
@@ -324,6 +560,21 @@ export default function BookingsPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Gantt Calendar View */}
+      {view === "calendar" && (
+        <GanttCalendar
+          bookingList={bookingList}
+          ganttStart={ganttStart}
+          onPrev={() => setGanttStart((d) => addDays(d, -7))}
+          onNext={() => setGanttStart((d) => addDays(d, 7))}
+          onToday={() => {
+            const d = new Date();
+            d.setDate(d.getDate() - 2);
+            setGanttStart(d);
+          }}
+        />
       )}
 
       {/* New Booking Modal */}

@@ -6,20 +6,29 @@ import Sidebar from "@/components/Sidebar";
 import { useAuth } from "@/lib/auth";
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/login";
 
   useEffect(() => {
-    if (!isAuthenticated && !isLoginPage) {
+    if (isHydrated && !isAuthenticated && !isLoginPage) {
       router.replace("/login");
     }
-  }, [isAuthenticated, isLoginPage, router]);
+  }, [isAuthenticated, isHydrated, isLoginPage, router]);
 
   // Login page — render without shell
   if (isLoginPage) {
     return <>{children}</>;
+  }
+
+  // Still reading localStorage — show spinner to prevent flash-to-login
+  if (!isHydrated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-sage-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-sage-200 border-t-sage-600" />
+      </div>
+    );
   }
 
   // Auth guard: show nothing while redirecting

@@ -364,3 +364,22 @@ export async function deleteMenuItemFromDB(id: string): Promise<void> {
 
   if (error) console.warn("[db] deleteMenuItemFromDB:", error.message);
 }
+
+/**
+ * Update a room's occupancy status (e.g. "cleaning" when guest checks out).
+ */
+export async function updateRoomStatus(
+  roomId: string,
+  newStatus: string
+): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await getSupabase()!
+    .from("rooms")
+    .update({ status: newStatus })
+    .eq("id", roomId);
+
+  if (error) {
+    console.warn(`[db] updateRoomStatus(${roomId}, ${newStatus}):`, error.message);
+  }
+}

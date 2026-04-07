@@ -206,6 +206,7 @@ export default function POSPage() {
   const [activeCategory, setActiveCategory]   = useState<string>(mainCats[0]?.id ?? "coffee");
   const [activeSubCat, setActiveSubCat]       = useState<string | null>(null);
   const [cart, setCart]                 = useState<OrderItem[]>([]);
+  const [payMode, setPayMode]           = useState<"pay_now" | "charge_room">("pay_now");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [showOpenBills, setShowOpenBills] = useState(false);
   const [showPayment, setShowPayment]   = useState(false);
@@ -281,6 +282,7 @@ export default function POSPage() {
   // ── Order actions ──
   const handlePlaceOrder = () => {
     if (cart.length === 0) return;
+    if (payMode === "pay_now") { setShowPayment(true); return; }
     if (!selectedRoom) { setShowPayment(true); return; }
 
     const room = rooms.find((r) => r.id === selectedRoom);
@@ -314,6 +316,7 @@ export default function POSPage() {
     deductInventory(cart);
     setCart([]);
     setSelectedRoom("");
+    setPayMode("pay_now");
   };
 
   const handleWalkinPayment = (method: PaymentMethod, refNo?: string, slipFile?: string) => {
@@ -327,6 +330,7 @@ export default function POSPage() {
     deductInventory(cart);
     setCart([]);
     setSelectedRoom("");
+    setPayMode("pay_now");
     setShowPayment(false);
   };
 
@@ -537,29 +541,53 @@ export default function POSPage() {
             </h2>
           </div>
 
-          {/* Room Selector */}
-          <div className="border-b border-sage-100 px-5 py-3">
-            <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-charcoal-500">
-              <BedDouble size={14} />
-              Bill to Room (optional)
-            </label>
-            <div className="relative">
-              <select
-                value={selectedRoom}
-                onChange={(e) => setSelectedRoom(e.target.value)}
-                className="w-full appearance-none rounded-xl border border-sage-200 bg-sage-50 px-3.5 py-2.5 pr-9 text-sm text-charcoal-700 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-200"
+          {/* Payment Mode Toggle */}
+          <div className="border-b border-sage-100 px-5 py-3 space-y-2.5">
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setPayMode("pay_now"); setSelectedRoom(""); }}
+                className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition-all ${
+                  payMode === "pay_now"
+                    ? "bg-sage-600 text-white border-sage-600"
+                    : "border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                }`}
               >
-                <option value="">{t("common.walkin")} — pay now</option>
-                {occupiedRooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.id} — {locale === "th" ? r.nameTh : r.nameEn}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
+                {t("pos.payNow")}
+              </button>
+              <button
+                onClick={() => setPayMode("charge_room")}
+                className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition-all ${
+                  payMode === "charge_room"
+                    ? "bg-wood-600 text-white border-wood-600"
+                    : "border-sage-200 bg-white text-charcoal-600 hover:bg-sage-50"
+                }`}
+              >
+                <BedDouble size={14} className="inline mr-1.5 -mt-0.5" />
+                {t("pos.chargeRoom")}
+              </button>
             </div>
-            {selectedRoom && (
-              <p className="mt-1.5 text-xs text-wood-600">Charges added to room tab, settled at check-out.</p>
+            {payMode === "charge_room" && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-charcoal-500">{t("pos.selectRoom")}</label>
+                <div className="relative">
+                  <select
+                    value={selectedRoom}
+                    onChange={(e) => setSelectedRoom(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-wood-200 bg-wood-50 px-3.5 py-2.5 pr-9 text-sm text-charcoal-700 focus:border-wood-400 focus:outline-none focus:ring-2 focus:ring-wood-200"
+                  >
+                    <option value="">-- {t("pos.selectRoom")} --</option>
+                    {occupiedRooms.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.id} — {locale === "th" ? r.nameTh : r.nameEn}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
+                </div>
+                {selectedRoom && (
+                  <p className="text-xs text-wood-600">{t("pos.chargeRoomNote")}</p>
+                )}
+              </div>
             )}
           </div>
 
@@ -629,9 +657,13 @@ export default function POSPage() {
                 {t("pos.splitBill")}
               </button>
               <button onClick={handlePlaceOrder}
-                className="w-full rounded-xl bg-sage-600 py-4 text-base font-bold text-white shadow-sm transition hover:bg-sage-700 active:scale-[0.98]">
-                {selectedRoom
-                  ? `Add to ${rooms.find((r) => r.id === selectedRoom)?.[locale === "th" ? "nameTh" : "nameEn"] ?? ""}`
+                className={`w-full rounded-xl py-4 text-base font-bold text-white shadow-sm transition active:scale-[0.98] ${
+                  payMode === "charge_room" ? "bg-wood-600 hover:bg-wood-700" : "bg-sage-600 hover:bg-sage-700"
+                }`}>
+                {payMode === "charge_room" && selectedRoom
+                  ? `${t("pos.addToRoom")} — ${rooms.find((r) => r.id === selectedRoom)?.[locale === "th" ? "nameTh" : "nameEn"] ?? selectedRoom}`
+                  : payMode === "charge_room"
+                  ? t("pos.addToRoom")
                   : `${t("common.pay")} ฿${cartTotal.toLocaleString()}`}
               </button>
               <button onClick={() => setCart([])}

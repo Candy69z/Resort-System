@@ -197,6 +197,20 @@ const dictionary: Record<string, Record<Locale, string>> = {
   "room.rice_field":        { en: "Rice Field",         th: "บ้านริมนา" },
   "room.tent_house":        { en: "Tent House",         th: "บ้านเต้นท์" },
   "room.camping":           { en: "Camping",            th: "ลานกางเต็นท์" },
+
+  // Front Desk — Calendar (Gantt) view
+  "fd.calendarView":        { en: "Calendar",           th: "ปฏิทิน" },
+  "fd.roomsView":           { en: "Room Status",        th: "สถานะห้องพัก" },
+  "fd.bookingsView":        { en: "Booking List",       th: "รายการจอง" },
+  "fd.today":               { en: "Today",              th: "วันนี้" },
+  "fd.noBookings":          { en: "No bookings in this period", th: "ไม่มีการจองในช่วงนี้" },
+
+  // POS — Charge to Room
+  "pos.payNow":             { en: "Pay Now",            th: "ชำระตอนนี้" },
+  "pos.chargeRoom":         { en: "Charge to Room",     th: "เพิ่มในบิลห้อง" },
+  "pos.selectRoom":         { en: "Select Room",        th: "เลือกห้อง" },
+  "pos.chargeRoomNote":     { en: "Added to room tab — settled at check-out", th: "เพิ่มในบิลห้อง — ชำระเมื่อเช็คเอาท์" },
+  "pos.addToRoom":          { en: "Add to Room Tab",    th: "เพิ่มในบิลห้อง" },
 };
 
 interface I18nContextType {
