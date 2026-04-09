@@ -59,13 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!found) return false;
     const { password: _pw, ...safeUser } = found;
     setUser(safeUser);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
+    const serialized = JSON.stringify(safeUser);
+    localStorage.setItem(SESSION_KEY, serialized);
+    // Also write a cookie so Edge middleware can validate sessions server-side
+    document.cookie = `resort_session=${encodeURIComponent(serialized)}; path=/; max-age=86400; SameSite=Strict`;
     return true;
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(SESSION_KEY);
+    document.cookie = "resort_session=; path=/; max-age=0; SameSite=Strict";
   }, []);
 
   const hasRole = useCallback(

@@ -16,6 +16,8 @@ import {
   Globe,
   LogOut,
   Sparkles,
+  ClipboardList,
+  UserCog,
 } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
@@ -40,6 +42,8 @@ export default function Sidebar() {
     { href: "/inventory", label: t("nav.inventory"), icon: Package, adminOnly: true },
     { href: "/reports", label: t("nav.reports"), icon: BarChart3, adminOnly: true },
     { href: "/admin", label: t("nav.admin"), icon: Settings, adminOnly: true },
+    { href: "/admin/inventory", label: t("nav.inventoryMgmt"), icon: ClipboardList, adminOnly: true },
+    { href: "/admin/staff", label: t("nav.staffMgmt"), icon: UserCog, adminOnly: true },
   ];
 
   const navItems = allNavItems.filter((item) => !item.adminOnly || isAdmin);
@@ -124,7 +128,7 @@ export default function Sidebar() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-white">{user.name}</p>
                 <p className="text-xs text-sage-400">
-                  {user.role === "admin" ? t("auth.role.admin") : t("auth.role.staff")}
+                  {user.role === "admin" ? t("auth.role.admin") : user.role === "manager" ? t("auth.role.manager") : t("auth.role.staff")}
                 </p>
               </div>
             </div>

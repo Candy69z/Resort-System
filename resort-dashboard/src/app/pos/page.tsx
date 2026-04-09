@@ -487,34 +487,49 @@ export default function POSPage() {
                 <button
                   key={item.id}
                   onClick={() => addToCart(item)}
-                  className={`relative rounded-2xl border p-4 text-left transition-all active:scale-95 hover:shadow-md min-h-[110px] flex flex-col justify-between ${
+                  className={`relative rounded-2xl border text-left transition-all active:scale-95 hover:shadow-md flex flex-col overflow-hidden ${
                     inCart
                       ? "border-sage-400 bg-sage-50 ring-2 ring-sage-400"
                       : "border-sage-200 bg-white hover:border-sage-300"
                   }`}
                 >
-                  <div>
-                    <p className="text-base font-semibold text-charcoal-800 leading-snug">{displayName}</p>
-                    {/* Secondary language label */}
+                  {/* Image thumbnail — shows when imageUrl is set */}
+                  {item.imageUrl ? (
+                    <div className="h-24 w-full shrink-0 overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.imageUrl}
+                        alt={displayName}
+                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-16 w-full shrink-0 bg-gradient-to-br from-sage-50 to-sage-100 flex items-center justify-center">
+                      <UtensilsCrossed size={22} className="text-sage-200" />
+                    </div>
+                  )}
+
+                  {/* Card content */}
+                  <div className="p-3 flex flex-col flex-1 gap-0.5">
+                    <p className="text-sm font-semibold text-charcoal-800 leading-snug">{displayName}</p>
                     {subName !== displayName && (
                       <p className="text-xs text-charcoal-400">{subName}</p>
                     )}
-                    {item.description && (
-                      <p className="mt-0.5 text-xs text-charcoal-300 line-clamp-1">{item.description}</p>
-                    )}
+                    <div className="mt-auto pt-1.5">
+                      <p className="text-lg font-bold text-sage-700">฿{item.price}</p>
+                      {item.availableFrom && (
+                        <p className="text-xs text-charcoal-300">{item.availableFrom}–{item.availableTo}</p>
+                      )}
+                      {inv && (
+                        <p className={`text-xs mt-0.5 ${isLowStock ? "text-amber-600 font-medium" : "text-charcoal-300"}`}>
+                          {isLowStock && <AlertTriangle size={10} className="inline mr-0.5" />}
+                          {inv.currentStock} {inv.unit}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-2">
-                    <p className="text-xl font-bold text-sage-700">฿{item.price}</p>
-                    {item.availableFrom && (
-                      <p className="text-xs text-charcoal-300">{item.availableFrom}–{item.availableTo}</p>
-                    )}
-                    {inv && (
-                      <p className={`text-xs mt-0.5 ${isLowStock ? "text-amber-600 font-medium" : "text-charcoal-300"}`}>
-                        {isLowStock && <AlertTriangle size={10} className="inline mr-0.5" />}
-                        {inv.currentStock} {inv.unit}
-                      </p>
-                    )}
-                  </div>
+
                   {inCart && (
                     <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-sage-600 text-xs font-bold text-white shadow">
                       {inCart.quantity}

@@ -188,6 +188,27 @@ function MenuItemModal({
             />
           </div>
 
+          {/* Image URL (Supabase Storage) */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-charcoal-700">
+              Image URL
+              <span className="ml-2 text-xs font-normal text-charcoal-400">Supabase Storage public URL</span>
+            </label>
+            <input
+              type="url"
+              value={form.imageUrl ?? ""}
+              onChange={(e) => setForm({ ...form, imageUrl: e.target.value || undefined })}
+              placeholder="https://xxx.supabase.co/storage/v1/object/public/menu/..."
+              className="w-full rounded-lg border border-sage-200 bg-sage-50 px-3.5 py-2.5 text-sm outline-none focus:border-sage-500"
+            />
+            {form.imageUrl && (
+              <div className="mt-2 h-20 w-28 overflow-hidden rounded-lg border border-sage-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.imageUrl} alt="preview" className="h-full w-full object-cover" />
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 rounded-lg border border-sage-200 px-4 py-2.5 text-sm font-medium text-charcoal-600 hover:bg-sage-50">
               {t("common.cancel")}

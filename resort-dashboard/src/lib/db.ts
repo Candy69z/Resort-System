@@ -24,6 +24,13 @@ import type {
   MenuSubCategory,
   HousekeepingRoom,
   HousekeepingStatus,
+  Booking,
+  BookingStatus,
+  PaymentInfo,
+  InventoryItem,
+  StaffProfile,
+  UserRole,
+  Department,
 } from "@/lib/types";
 
 // ── Fallback seeds ─────────────────────────────────────────────────────
@@ -33,6 +40,8 @@ import {
   menuMainCategories  as fallbackMainCats,
   menuSubCategories   as fallbackSubCats,
   housekeepingRooms   as fallbackHkRooms,
+  bookings            as fallbackBookings,
+  inventoryItems      as fallbackInventory,
 } from "@/lib/mock-data";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -84,6 +93,57 @@ interface MenuItemRow {
   available_from: string | null;
   available_to: string | null;
   inventory_item_id: string | null;
+  image_url: string | null;
+}
+
+interface BookingRow {
+  id: string;
+  room_id: string;
+  guest_id: string | null;
+  guest_name: string;
+  guest_phone: string;
+  guest_email: string | null;
+  check_in: string;
+  check_out: string;
+  status: string;
+  total_amount: number;
+  payment_method: string | null;
+  payment_ref: string | null;
+  payment_slip_url: string | null;
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+interface InventoryItemRow {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+  current_stock: number;
+  min_threshold: number;
+  cost_per_unit: number;
+  last_restocked: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface StaffProfileRow {
+  id: string;
+  auth_user_id: string | null;
+  username: string;
+  name: string;
+  name_th: string | null;
+  role: string;
+  department: string;
+  avatar_initials: string;
+  is_active: boolean;
+  phone: string | null;
+  notes: string | null;
+  password_plain: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -152,6 +212,65 @@ function rowToMenuItem(r: MenuItemRow): MenuItem {
     availableFrom:   r.available_from ?? undefined,
     availableTo:     r.available_to ?? undefined,
     inventoryItemId: r.inventory_item_id ?? undefined,
+    imageUrl:        r.image_url ?? undefined,
+  };
+}
+
+function rowToBooking(r: BookingRow): Booking {
+  return {
+    id:          r.id,
+    roomId:      r.room_id,
+    guest: {
+      id:    r.guest_id ?? `G-${r.id}`,
+      name:  r.guest_name,
+      phone: r.guest_phone,
+      email: r.guest_email ?? undefined,
+    },
+    checkIn:     r.check_in,
+    checkOut:    r.check_out,
+    status:      r.status as BookingStatus,
+    addOns:      [],
+    totalAmount: Number(r.total_amount),
+    payment:     r.payment_method
+      ? {
+          method:       r.payment_method as PaymentInfo["method"],
+          refNo:        r.payment_ref        ?? undefined,
+          slipImageUrl: r.payment_slip_url   ?? undefined,
+          paidAt:       r.paid_at            ?? undefined,
+        }
+      : undefined,
+    notes:       r.notes ?? undefined,
+    createdAt:   r.created_at,
+  };
+}
+
+function rowToInventoryItem(r: InventoryItemRow): InventoryItem {
+  return {
+    id:            r.id,
+    name:          r.name,
+    category:      r.category as InventoryItem["category"],
+    unit:          r.unit,
+    currentStock:  Number(r.current_stock),
+    minThreshold:  Number(r.min_threshold),
+    costPerUnit:   Number(r.cost_per_unit),
+    lastRestocked: r.last_restocked ?? undefined,
+  };
+}
+
+function rowToStaffProfile(r: StaffProfileRow): StaffProfile {
+  return {
+    id:             r.id,
+    username:       r.username,
+    name:           r.name,
+    nameTh:         r.name_th ?? undefined,
+    role:           r.role as UserRole,
+    department:     r.department as Department,
+    avatarInitials: r.avatar_initials,
+    isActive:       r.is_active,
+    phone:          r.phone ?? undefined,
+    notes:          r.notes ?? undefined,
+    passwordPlain:  r.password_plain ?? undefined,
+    createdAt:      r.created_at,
   };
 }
 
@@ -346,6 +465,7 @@ export async function upsertMenuItemToDB(item: MenuItem): Promise<void> {
       available_from:    item.availableFrom ?? null,
       available_to:      item.availableTo ?? null,
       inventory_item_id: item.inventoryItemId ?? null,
+      image_url:         item.imageUrl ?? null,
     });
 
   if (error) console.warn("[db] upsertMenuItemToDB:", error.message);
@@ -382,4 +502,192 @@ export async function updateRoomStatus(
   if (error) {
     console.warn(`[db] updateRoomStatus(${roomId}, ${newStatus}):`, error.message);
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// BOOKINGS
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all bookings, ordered by check_in descending.
+ */
+export async function fetchBookings(): Promise<Booking[]> {
+  if (!isSupabaseConfigured) return fallbackBookings;
+
+  const sb = getSupabase();
+  if (!sb) return fallbackBookings;
+
+  const { data, error } = await sb
+    .from("bookings")
+    .select("*")
+    .order("check_in", { ascending: false });
+
+  if (error) {
+    console.warn("[db] fetchBookings:", error.message);
+    return fallbackBookings;
+  }
+  if (!data || data.length === 0) return fallbackBookings;
+  return (data as unknown as BookingRow[]).map(rowToBooking);
+}
+
+/**
+ * Update booking status and optionally record payment info.
+ * The DB trigger `trg_booking_status_sync` automatically syncs room status.
+ */
+export async function updateBookingStatus(
+  bookingId: string,
+  status: BookingStatus,
+  payment?: PaymentInfo
+): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const sb = getSupabase();
+  if (!sb) return;
+
+  const payload: Record<string, unknown> = { status };
+
+  if (payment) {
+    payload.payment_method   = payment.method;
+    payload.payment_ref      = payment.refNo      ?? null;
+    payload.payment_slip_url = payment.slipImageUrl ?? null;
+    payload.paid_at          = payment.paidAt      ?? new Date().toISOString();
+  }
+
+  const { error } = await sb
+    .from("bookings")
+    .update(payload)
+    .eq("id", bookingId);
+
+  if (error) {
+    console.warn(`[db] updateBookingStatus(${bookingId}, ${status}):`, error.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// INVENTORY
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all inventory items ordered by category then name.
+ */
+export async function fetchInventoryItems(): Promise<InventoryItem[]> {
+  if (!isSupabaseConfigured) return fallbackInventory;
+
+  const sb = getSupabase();
+  if (!sb) return fallbackInventory;
+
+  const { data, error } = await sb
+    .from("inventory_items")
+    .select("*")
+    .order("category", { ascending: true })
+    .order("name",     { ascending: true });
+
+  if (error) {
+    console.warn("[db] fetchInventoryItems:", error.message);
+    return fallbackInventory;
+  }
+  if (!data || data.length === 0) return fallbackInventory;
+  return (data as unknown as InventoryItemRow[]).map(rowToInventoryItem);
+}
+
+/**
+ * Upsert (insert or update) a single inventory item.
+ */
+export async function upsertInventoryItemToDB(item: InventoryItem): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await getSupabase()!
+    .from("inventory_items")
+    .upsert({
+      id:            item.id,
+      name:          item.name,
+      category:      item.category,
+      unit:          item.unit,
+      current_stock: item.currentStock,
+      min_threshold: item.minThreshold,
+      cost_per_unit: item.costPerUnit,
+      last_restocked: item.lastRestocked ?? null,
+    });
+
+  if (error) console.warn("[db] upsertInventoryItemToDB:", error.message);
+}
+
+/**
+ * Delete an inventory item by id.
+ */
+export async function deleteInventoryItemFromDB(id: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await getSupabase()!
+    .from("inventory_items")
+    .delete()
+    .eq("id", id);
+
+  if (error) console.warn("[db] deleteInventoryItemFromDB:", error.message);
+}
+
+// ─────────────────────────────────────────────────────────────
+// STAFF PROFILES
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all staff profiles ordered by role then name.
+ */
+export async function fetchStaffProfiles(): Promise<StaffProfile[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const sb = getSupabase();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from("user_profiles")
+    .select("*")
+    .order("role",       { ascending: true })
+    .order("name",       { ascending: true });
+
+  if (error) {
+    console.warn("[db] fetchStaffProfiles:", error.message);
+    return [];
+  }
+  if (!data) return [];
+  return (data as unknown as StaffProfileRow[]).map(rowToStaffProfile);
+}
+
+/**
+ * Upsert a staff profile.
+ */
+export async function upsertStaffProfileToDB(staff: StaffProfile): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await getSupabase()!
+    .from("user_profiles")
+    .upsert({
+      id:               staff.id,
+      username:         staff.username,
+      name:             staff.name,
+      name_th:          staff.nameTh         ?? null,
+      role:             staff.role,
+      department:       staff.department,
+      avatar_initials:  staff.avatarInitials,
+      is_active:        staff.isActive,
+      phone:            staff.phone          ?? null,
+      notes:            staff.notes          ?? null,
+      password_plain:   staff.passwordPlain  ?? null,
+    });
+
+  if (error) console.warn("[db] upsertStaffProfileToDB:", error.message);
+}
+
+/**
+ * Delete a staff profile by id.
+ */
+export async function deleteStaffProfileFromDB(id: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await getSupabase()!
+    .from("user_profiles")
+    .delete()
+    .eq("id", id);
+
+  if (error) console.warn("[db] deleteStaffProfileFromDB:", error.message);
 }

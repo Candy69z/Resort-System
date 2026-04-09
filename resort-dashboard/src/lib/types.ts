@@ -8,7 +8,10 @@ export type BookingStatus = "confirmed" | "checked_in" | "checked_out" | "cancel
 export type OrderStatus = "open" | "closed" | "paid";
 export type ActivityCategory = "workshop" | "outdoor" | "event";
 export type PaymentMethod = "cash" | "credit_card" | "promptpay";
-export type UserRole = "admin" | "staff";
+export type UserRole = "admin" | "manager" | "staff";
+export type Department =
+  | "frontdesk" | "housekeeping" | "fnb"
+  | "activities" | "admin" | "general";
 export type MembershipTier = "standard" | "silver" | "gold";
 export type HousekeepingStatus = "dirty" | "cleaning" | "inspected" | "ready";
 
@@ -111,6 +114,7 @@ export interface MenuItem {
   availableFrom?: string;
   availableTo?: string;
   inventoryItemId?: string;
+  imageUrl?: string;           // Supabase Storage public URL for item thumbnail
 }
 
 // ---------- F&B Sub-Category ----------
@@ -172,7 +176,7 @@ export interface ActivityBooking {
 export interface InventoryItem {
   id: string;
   name: string;
-  category: "food_supply" | "beverage" | "equipment" | "consumable";
+  category: "food_supply" | "beverage" | "equipment" | "consumable" | "cleaning_supplies" | "amenities";
   unit: string;
   currentStock: number;
   minThreshold: number;
@@ -239,6 +243,22 @@ export interface TopSalesItem {
   category: MenuMainCategory;
   qtySold: number;
   revenue: number;
+}
+
+// ---------- Staff Profile ----------
+export interface StaffProfile {
+  id: string;
+  username: string;
+  name: string;
+  nameTh?: string;
+  role: UserRole;
+  department: Department;
+  avatarInitials: string;
+  isActive: boolean;
+  phone?: string;
+  notes?: string;
+  passwordPlain?: string;      // dev-only — use Supabase Auth in production
+  createdAt: string;
 }
 
 // ---------- Dashboard Stats ----------

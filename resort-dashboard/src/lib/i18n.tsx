@@ -100,11 +100,14 @@ const dictionary: Record<string, Record<Locale, string>> = {
   "auth.loginError": { en: "Invalid username or password", th: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" },
   "auth.welcome": { en: "Welcome back", th: "ยินดีต้อนรับกลับ" },
   "auth.role.admin": { en: "Admin", th: "ผู้ดูแลระบบ" },
+  "auth.role.manager": { en: "Manager", th: "ผู้จัดการ" },
   "auth.role.staff": { en: "Staff", th: "พนักงาน" },
 
   // Guests CRM
   "nav.guests": { en: "Guests", th: "แขก" },
   "nav.admin": { en: "Admin", th: "ผู้ดูแล" },
+  "nav.inventoryMgmt": { en: "Inventory Mgmt", th: "จัดการสินค้าคงคลัง" },
+  "nav.staffMgmt": { en: "Staff Mgmt", th: "จัดการพนักงาน" },
   "guests.title": { en: "Guest Profiles", th: "ข้อมูลแขก" },
   "guests.subtitle": { en: "CRM — membership & visit history", th: "ระบบ CRM — สมาชิกและประวัติการเข้าพัก" },
   "guests.tier.gold": { en: "Gold", th: "ทอง" },
